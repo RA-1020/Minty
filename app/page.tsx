@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Dashboard } from "@/components/dashboard"
 import { Budgets } from "@/components/budgets"
@@ -10,10 +10,21 @@ import { Settings } from "@/components/settings"
 import { AuthForm } from "@/components/auth-form"
 import { SupabaseTest } from "@/components/supabase-test"
 import { SetupGuide } from "@/components/setup-guide"
-import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider, useAuth } from "@/lib/auth-context"
+import { ErrorBoundary } from "@/components/error-boundary"
+import { useAuth } from "@/lib/auth-context"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+function LoadingSpinner({ message = "Loading..." }: { message?: string }) {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <p className="text-gray-600 dark:text-gray-400">{message}</p>
+      </div>
+    </div>
+  )
+}
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState("dashboard")
@@ -22,14 +33,7 @@ function AppContent() {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner message="Checking authentication..." />
   }
 
   // Show Supabase test if requested
@@ -85,17 +89,53 @@ function AppContent() {
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":
-        return <Dashboard />
+        return (
+          <Suspense fallback={<LoadingSpinner message="Loading dashboard..." />}>
+            <ErrorBoundary>
+              <Dashboard />
+            </ErrorBoundary>
+          </Suspense>
+        )
       case "budgets":
-        return <Budgets />
+        return (
+          <Suspense fallback={<LoadingSpinner message="Loading budgets..." />}>
+            <ErrorBoundary>
+              <Budgets />
+            </ErrorBoundary>
+          </Suspense>
+        )
       case "transactions":
-        return <Transactions />
+        return (
+          <Suspense fallback={<LoadingSpinner message="Loading transactions..." />}>
+            <ErrorBoundary>
+              <Transactions />
+            </ErrorBoundary>
+          </Suspense>
+        )
       case "categories":
-        return <Categories />
+        return (
+          <Suspense fallback={<LoadingSpinner message="Loading categories..." />}>
+            <ErrorBoundary>
+              <Categories />
+            </ErrorBoundary>
+          </Suspense>
+        )
       case "settings":
-        return <Settings />
+        return (
+          <Suspense fallback={<LoadingSpinner message="Loading settings..." />}>
+            <ErrorBoundary>
+              <Settings />
+            </ErrorBoundary>
+          </Suspense>
+        )
       default:
-        return <Dashboard />
+        return (
+          <Suspense fallback={<LoadingSpinner message="Loading dashboard..." />}>
+            <ErrorBoundary>
+              <Dashboard />
+            </ErrorBoundary>
+          </Suspense>
+        )
     }
   }
 
@@ -108,11 +148,5 @@ function AppContent() {
 }
 
 export default function Home() {
-  return (
-    <ThemeProvider attribute="class" defaultTheme="light">
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
-  )
+  return <AppContent />
 }

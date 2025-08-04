@@ -112,7 +112,7 @@ export function useTransactions() {
 
   useEffect(() => {
     fetchTransactions()
-  }, [user])
+  }, [user?.id]) // Only depend on user.id, not the whole user object
 
   return {
     transactions,

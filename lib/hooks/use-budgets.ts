@@ -89,7 +89,7 @@ export function useBudgets() {
 
   useEffect(() => {
     fetchBudgets()
-  }, [user])
+  }, [user?.id]) // Only depend on user.id, not the whole user object
 
   return {
     budgets,

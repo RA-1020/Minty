@@ -86,7 +86,7 @@ export function useCategories() {
 
   useEffect(() => {
     fetchCategories()
-  }, [user])
+  }, [user?.id]) // Only depend on user.id, not the whole user object
 
   return {
     categories,

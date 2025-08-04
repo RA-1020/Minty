@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,36 +11,78 @@ import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useTheme } from "next-themes"
-import { User, Bell, Globe, Download, Upload, Shield, Trash2, Save, Moon, Sun } from "lucide-react"
+import { useProfile } from "@/lib/hooks/use-profile"
+import { toast } from "sonner"
+import { User, Bell, Globe, Download, Upload, Shield, Trash2, Save, Moon, Sun, Loader2 } from "lucide-react"
 
 export function Settings() {
   const { theme, setTheme } = useTheme()
-  const [settings, setSettings] = useState({
-    profile: {
-      name: "John Doe",
-      email: "john@example.com",
-      avatar: "/placeholder.svg?height=64&width=64",
-    },
-    preferences: {
-      currency: "USD",
-      dateFormat: "MM/DD/YYYY",
-      language: "en",
-      theme: "light",
-    },
-    notifications: {
-      budgetAlerts: true,
-      weeklyReports: true,
-      monthlyReports: true,
-      transactionReminders: false,
-      emailNotifications: true,
-      pushNotifications: true,
-    },
-    privacy: {
-      dataSharing: false,
-      analytics: true,
-      marketing: false,
-    },
+  const { profile, loading, updateProfile, updateNotificationPreferences } = useProfile()
+  const [saving, setSaving] = useState(false)
+
+  // Local state for form data
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    currency: "USD",
+    date_format: "MM/DD/YYYY",
+    language: "en",
+    theme: "light",
+    timezone: "UTC",
+    week_start_day: 1,
   })
+
+  // Local state for notifications
+  const [notifications, setNotifications] = useState({
+    budgetAlerts: true,
+    weeklyReports: true,
+    monthlyReports: true,
+    transactionReminders: false,
+    emailNotifications: true,
+    pushNotifications: true,
+  })
+
+  // Local state for privacy settings
+  const [privacy, setPrivacy] = useState({
+    dataSharing: false,
+    analytics: true,
+    marketing: false,
+  })
+
+  // Load profile data into form when it's available
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || "",
+        email: profile.email,
+        currency: profile.currency,
+        date_format: profile.date_format,
+        language: profile.language,
+        theme: profile.theme,
+        timezone: profile.timezone,
+        week_start_day: profile.week_start_day,
+      })
+
+      // Load notification preferences
+      if (profile.notification_preferences) {
+        setNotifications({
+          budgetAlerts: profile.notification_preferences.budgetAlerts ?? true,
+          weeklyReports: profile.notification_preferences.weeklyReports ?? true,
+          monthlyReports: profile.notification_preferences.monthlyReports ?? true,
+          transactionReminders: profile.notification_preferences.transactionReminders ?? false,
+          emailNotifications: profile.notification_preferences.emailNotifications ?? true,
+          pushNotifications: profile.notification_preferences.pushNotifications ?? true,
+        })
+
+        // Load privacy preferences
+        setPrivacy({
+          dataSharing: profile.notification_preferences.dataSharing ?? false,
+          analytics: profile.notification_preferences.analytics ?? true,
+          marketing: profile.notification_preferences.marketing ?? false,
+        })
+      }
+    }
+  }, [profile])
 
   const currencies = [
     { code: "USD", name: "US Dollar", symbol: "$" },
@@ -60,19 +102,66 @@ export function Settings() {
     { code: "pt", name: "Portuguese" },
   ]
 
-  const handleSaveSettings = () => {
-    // Simulate saving settings
-    console.log("Settings saved:", settings)
+  const handleSaveSettings = async () => {
+    try {
+      setSaving(true)
+      
+      // Update profile data
+      await updateProfile({
+        full_name: formData.full_name,
+        currency: formData.currency,
+        date_format: formData.date_format,
+        language: formData.language,
+        theme: formData.theme,
+        timezone: formData.timezone,
+        week_start_day: formData.week_start_day,
+      })
+
+      // Update notification preferences (merge with privacy)
+      await updateNotificationPreferences({
+        ...notifications,
+        ...privacy,
+      })
+
+      // Update theme in next-themes
+      setTheme(formData.theme)
+
+      toast.success("Settings saved successfully!")
+    } catch (error) {
+      console.error("Error saving settings:", error)
+      toast.error("Failed to save settings. Please try again.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleExportData = () => {
-    // Simulate data export
-    console.log("Exporting data...")
+    // TODO: Implement data export
+    toast.info("Data export feature coming soon!")
   }
 
   const handleImportData = () => {
-    // Simulate data import
-    console.log("Importing data...")
+    // TODO: Implement data import
+    toast.info("Data import feature coming soon!")
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading your profile...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-6">
+        <p className="text-center text-gray-600 dark:text-gray-400">Failed to load profile data.</p>
+      </div>
+    )
   }
 
   return (
@@ -96,8 +185,8 @@ export function Settings() {
           <CardContent className="space-y-6">
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={settings.profile.avatar || "/placeholder.svg"} />
-                <AvatarFallback>{settings.profile.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={profile.avatar_url || "/placeholder.svg"} />
+                <AvatarFallback>{formData.full_name.charAt(0) || formData.email.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="space-y-2">
                 <Button variant="outline" size="sm">
@@ -112,12 +201,9 @@ export function Settings() {
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  value={settings.profile.name}
+                  value={formData.full_name}
                   onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      profile: { ...settings.profile, name: e.target.value },
-                    })
+                    setFormData({ ...formData, full_name: e.target.value })
                   }
                 />
               </div>
@@ -126,14 +212,11 @@ export function Settings() {
                 <Input
                   id="email"
                   type="email"
-                  value={settings.profile.email}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      profile: { ...settings.profile, email: e.target.value },
-                    })
-                  }
+                  value={formData.email}
+                  disabled
+                  className="bg-gray-50 dark:bg-gray-800"
                 />
+                <p className="text-xs text-gray-500">Email cannot be changed</p>
               </div>
             </div>
           </CardContent>
@@ -148,10 +231,15 @@ export function Settings() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {formData.theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                 <span className="text-sm font-medium">Dark Mode</span>
               </div>
-              <Switch checked={theme === "dark"} onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} />
+              <Switch 
+                checked={formData.theme === "dark"} 
+                onCheckedChange={(checked) => 
+                  setFormData({ ...formData, theme: checked ? "dark" : "light" })
+                } 
+              />
             </div>
 
             <Separator />
@@ -168,9 +256,13 @@ export function Settings() {
 
             <Separator />
 
-            <Button className="w-full" onClick={handleSaveSettings}>
-              <Save className="mr-2 h-4 w-4" />
-              Save All Changes
+            <Button className="w-full" onClick={handleSaveSettings} disabled={saving}>
+              {saving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {saving ? "Saving..." : "Save All Changes"}
             </Button>
           </CardContent>
         </Card>
@@ -190,12 +282,9 @@ export function Settings() {
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
               <Select
-                value={settings.preferences.currency}
+                value={formData.currency}
                 onValueChange={(value) =>
-                  setSettings({
-                    ...settings,
-                    preferences: { ...settings.preferences, currency: value },
-                  })
+                  setFormData({ ...formData, currency: value })
                 }
               >
                 <SelectTrigger>
@@ -217,12 +306,9 @@ export function Settings() {
             <div className="space-y-2">
               <Label htmlFor="dateFormat">Date Format</Label>
               <Select
-                value={settings.preferences.dateFormat}
+                value={formData.date_format}
                 onValueChange={(value) =>
-                  setSettings({
-                    ...settings,
-                    preferences: { ...settings.preferences, dateFormat: value },
-                  })
+                  setFormData({ ...formData, date_format: value })
                 }
               >
                 <SelectTrigger>
@@ -239,12 +325,9 @@ export function Settings() {
             <div className="space-y-2">
               <Label htmlFor="language">Language</Label>
               <Select
-                value={settings.preferences.language}
+                value={formData.language}
                 onValueChange={(value) =>
-                  setSettings({
-                    ...settings,
-                    preferences: { ...settings.preferences, language: value },
-                  })
+                  setFormData({ ...formData, language: value })
                 }
               >
                 <SelectTrigger>
@@ -285,12 +368,9 @@ export function Settings() {
                     </p>
                   </div>
                   <Switch
-                    checked={settings.notifications.budgetAlerts}
+                    checked={notifications.budgetAlerts}
                     onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        notifications: { ...settings.notifications, budgetAlerts: checked },
-                      })
+                      setNotifications({ ...notifications, budgetAlerts: checked })
                     }
                   />
                 </div>
@@ -301,12 +381,9 @@ export function Settings() {
                     <p className="text-xs text-gray-600 dark:text-gray-400">Remind me to log transactions</p>
                   </div>
                   <Switch
-                    checked={settings.notifications.transactionReminders}
+                    checked={notifications.transactionReminders}
                     onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        notifications: { ...settings.notifications, transactionReminders: checked },
-                      })
+                      setNotifications({ ...notifications, transactionReminders: checked })
                     }
                   />
                 </div>
@@ -324,12 +401,9 @@ export function Settings() {
                     <p className="text-xs text-gray-600 dark:text-gray-400">Weekly spending summary</p>
                   </div>
                   <Switch
-                    checked={settings.notifications.weeklyReports}
+                    checked={notifications.weeklyReports}
                     onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        notifications: { ...settings.notifications, weeklyReports: checked },
-                      })
+                      setNotifications({ ...notifications, weeklyReports: checked })
                     }
                   />
                 </div>
@@ -340,12 +414,9 @@ export function Settings() {
                     <p className="text-xs text-gray-600 dark:text-gray-400">Monthly financial overview</p>
                   </div>
                   <Switch
-                    checked={settings.notifications.monthlyReports}
+                    checked={notifications.monthlyReports}
                     onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        notifications: { ...settings.notifications, monthlyReports: checked },
-                      })
+                      setNotifications({ ...notifications, monthlyReports: checked })
                     }
                   />
                 </div>
@@ -363,12 +434,9 @@ export function Settings() {
                     <p className="text-xs text-gray-600 dark:text-gray-400">Receive notifications via email</p>
                   </div>
                   <Switch
-                    checked={settings.notifications.emailNotifications}
+                    checked={notifications.emailNotifications}
                     onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        notifications: { ...settings.notifications, emailNotifications: checked },
-                      })
+                      setNotifications({ ...notifications, emailNotifications: checked })
                     }
                   />
                 </div>
@@ -379,12 +447,9 @@ export function Settings() {
                     <p className="text-xs text-gray-600 dark:text-gray-400">Receive push notifications in browser</p>
                   </div>
                   <Switch
-                    checked={settings.notifications.pushNotifications}
+                    checked={notifications.pushNotifications}
                     onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        notifications: { ...settings.notifications, pushNotifications: checked },
-                      })
+                      setNotifications({ ...notifications, pushNotifications: checked })
                     }
                   />
                 </div>
@@ -414,12 +479,9 @@ export function Settings() {
                   </p>
                 </div>
                 <Switch
-                  checked={settings.privacy.dataSharing}
+                  checked={privacy.dataSharing}
                   onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      privacy: { ...settings.privacy, dataSharing: checked },
-                    })
+                    setPrivacy({ ...privacy, dataSharing: checked })
                   }
                 />
               </div>
@@ -430,12 +492,9 @@ export function Settings() {
                   <p className="text-xs text-gray-600 dark:text-gray-400">Help us improve by sharing usage analytics</p>
                 </div>
                 <Switch
-                  checked={settings.privacy.analytics}
+                  checked={privacy.analytics}
                   onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      privacy: { ...settings.privacy, analytics: checked },
-                    })
+                    setPrivacy({ ...privacy, analytics: checked })
                   }
                 />
               </div>
@@ -448,12 +507,9 @@ export function Settings() {
                   </p>
                 </div>
                 <Switch
-                  checked={settings.privacy.marketing}
+                  checked={privacy.marketing}
                   onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      privacy: { ...settings.privacy, marketing: checked },
-                    })
+                    setPrivacy({ ...privacy, marketing: checked })
                   }
                 />
               </div>

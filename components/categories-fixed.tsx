@@ -104,12 +104,10 @@ export function Categories() {
     }
   }, [user?.id, categories?.length])
 
-  // ✅ FIXED: Initial load effect - REMOVE loadCategoryStats dependency to prevent infinite loop
+  // ✅ FIXED: Initial load effect
   useEffect(() => {
-    if (categories && categories.length > 0) {
-      loadCategoryStats()
-    }
-  }, [user?.id, categories?.length]) // Removed loadCategoryStats dependency
+    loadCategoryStats()
+  }, [loadCategoryStats])
 
   // ✅ FIXED: Separate effect for real-time listener
   useEffect(() => {
@@ -136,7 +134,7 @@ export function Categories() {
       console.log('Cleaning up transaction listener')
       supabase.removeChannel(transactionChannel)
     }
-  }, [user?.id]) // Removed loadCategoryStats dependency
+  }, [user?.id, loadCategoryStats])
 
   const getCategoryStatus = (spent: number, limit: number, threshold: number) => {
     if (limit === 0) return { status: "no-limit", color: "default" }
