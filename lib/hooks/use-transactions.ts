@@ -39,7 +39,7 @@ export function useTransactions() {
         .from("transactions")
         .select(`
           *,
-          category:categories(name, color)
+          categories:categories(name, color)
         `)
         .eq("user_id", user.id)
         .order("date", { ascending: false })

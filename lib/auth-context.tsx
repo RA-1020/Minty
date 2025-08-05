@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 
@@ -22,21 +21,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+
+  // Memoize fetchProfile function
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+      if (error && error.code !== 'PGRST116') {
+        console.error("Error fetching profile:", error)
+        return
+      }
+      setProfile(data || null)
+    } catch (error) {
+      console.error("Error fetching profile:", error)
+    }
+  }, [supabase])
 
   useEffect(() => {
+    let mounted = true
+
     // Get initial session
     const getInitialSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        await fetchProfile(session.user.id)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (mounted) {
+          setUser(session?.user ?? null)
+          setLoading(false)  // Set loading to false immediately after getting auth state
+          
+          // Fetch profile in the background
+          if (session?.user) {
+            fetchProfile(session.user.id)
+          }
+        }
+      } catch (error) {
+        console.error("Error getting session:", error)
+        if (mounted) {
+          setLoading(false)
+        }
       }
-
-      setLoading(false)
     }
 
     getInitialSession()
@@ -45,35 +68,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, session?.user?.id)
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        await fetchProfile(session.user.id)
-      } else {
-        setProfile(null)
+      if (mounted) {
+        setUser(session?.user ?? null)
+        setLoading(false)  // Update loading state immediately
+        
+        // Fetch profile in the background
+        if (session?.user) {
+          fetchProfile(session.user.id)
+        } else {
+          setProfile(null)
+        }
       }
-
-      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-        console.error("Error fetching profile:", error)
-        return
-      }
-      
-      setProfile(data || null)
-    } catch (error) {
-      console.error("Error fetching profile:", error)
-    }
-  }
+  // Now using the memoized fetchProfile from above
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {

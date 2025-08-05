@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useFormatting } from "@/lib/hooks/use-formatting"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -23,6 +24,7 @@ import { createClient } from "@/lib/supabase/client"
 const supabase = createClient()
 
 export function Transactions() {
+  const { formatCurrency, formatDate } = useFormatting()
   const [transactions, setTransactions] = useState([])
   const [filteredTransactions, setFilteredTransactions] = useState([])
   const [categories, setCategories] = useState([])
@@ -48,13 +50,20 @@ export function Transactions() {
         // Load transactions with category and budget names
         const { data: transactionsData, error: transactionsError } = await supabase
           .from('transactions')
-          .select(`
-            *,
-            categories(name, color),
-            budgets(name)
-          `)
+          .select('*, category_id, budget_id')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
+
+        // Fetch categories and budgets data
+        const { data: categoriesMap, error: categoriesMapError } = await supabase
+          .from('categories')
+          .select('id, name, color')
+          .in('id', transactionsData?.map(t => t.category_id) || [])
+
+        const { data: budgetsMap, error: budgetsMapError } = await supabase
+          .from('budgets')
+          .select('id, name')
+          .in('id', transactionsData?.map(t => t.budget_id).filter(Boolean) || [])
 
         // Load categories
         const { data: categoriesData, error: categoriesError } = await supabase
@@ -83,12 +92,23 @@ export function Transactions() {
           return
         }
 
+        // Create lookup maps
+        const categoryLookup = (categoriesMap || []).reduce((acc, cat) => {
+          acc[cat.id] = cat;
+          return acc;
+        }, {} as Record<string, any>);
+
+        const budgetLookup = (budgetsMap || []).reduce((acc, budget) => {
+          acc[budget.id] = budget;
+          return acc;
+        }, {} as Record<string, any>);
+
         // Format transactions data
         const formattedTransactions = (transactionsData || []).map(t => ({
           ...t,
-          categoryName: t.categories?.name || 'Uncategorized',
-          categoryColor: t.categories?.color || '#8884d8',
-          budgetName: t.budgets?.name || null,
+          categoryName: categoryLookup[t.category_id]?.name || 'Uncategorized',
+          categoryColor: categoryLookup[t.category_id]?.color || '#8884d8',
+          budgetName: budgetLookup[t.budget_id]?.name || null,
           // Parse tags if stored as JSON string
           parsedTags: typeof t.tags === 'string' ? 
             (t.tags ? t.tags.split(',').map(tag => tag.trim()).filter(Boolean) : []) : 
@@ -690,7 +710,7 @@ export function Transactions() {
             <CardTitle className="text-sm font-medium">Total Income</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${totalIncome.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
             <p className="text-xs text-gray-600 dark:text-gray-400">All time</p>
           </CardContent>
         </Card>
@@ -699,7 +719,7 @@ export function Transactions() {
             <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">${totalExpenses.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
             <p className="text-xs text-gray-600 dark:text-gray-400">All time</p>
           </CardContent>
         </Card>
@@ -711,7 +731,7 @@ export function Transactions() {
             <div
               className={`text-2xl font-bold ${totalIncome - totalExpenses >= 0 ? "text-green-600" : "text-red-600"}`}
             >
-              ${(totalIncome - totalExpenses).toLocaleString()}
+              {formatCurrency(totalIncome - totalExpenses)}
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-400">Income - Expenses</p>
           </CardContent>
@@ -832,7 +852,7 @@ export function Transactions() {
                           {transaction.categoryName}
                         </Badge>
                       </div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{transaction.date}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{formatDate(new Date(transaction.date))}</span>
                       {transaction.budgetName && (
                         <Badge variant="secondary" className="text-xs">
                           {transaction.budgetName}
@@ -856,7 +876,7 @@ export function Transactions() {
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
                     <p className={`font-medium ${transaction.type === "income" ? "text-green-600" : "text-red-600"}`}>
-                      {transaction.type === "income" ? "+" : ""}${Math.abs(transaction.amount).toFixed(2)}
+                      {transaction.type === "income" ? "+" : ""}{formatCurrency(Math.abs(transaction.amount))}
                     </p>
                   </div>
                   <div className="flex space-x-1">

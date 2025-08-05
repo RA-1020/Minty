@@ -25,68 +25,147 @@ export function useCategories() {
   const supabase = createClient()
 
   const fetchCategories = async () => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return // Don't set error when user is not logged in, this is a normal state
+    }
 
     try {
       setLoading(true)
-      const { data, error } = await supabase.from("categories").select("*").eq("user_id", user.id).order("name")
+      setError(null) // Clear any previous errors
+      
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("name")
 
-      if (error) throw error
+      if (error) {
+        console.error("Database error:", error)
+        setError(error.message)
+        return
+      }
+
       setCategories(data || [])
     } catch (err: any) {
-      setError(err.message)
+      console.error("Error in fetchCategories:", err)
+      setError(err.message || "Failed to load categories")
+      setCategories([]) // Reset categories on error
     } finally {
       setLoading(false)
     }
   }
 
   const createCategory = async (categoryData: Omit<Category, "id" | "user_id" | "created_at" | "updated_at">) => {
-    if (!user) return
+    if (!user) {
+      const error = new Error('You must be logged in to create a category')
+      setError(error.message)
+      throw error
+    }
 
     try {
       const { data, error } = await supabase
         .from("categories")
-        .insert([{ ...categoryData, user_id: user.id }])
+        .insert([{ 
+          ...categoryData, 
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
         .select()
         .single()
 
       if (error) throw error
+      
+      if (!data) {
+        throw new Error('Failed to create category')
+      }
+
       setCategories((prev) => [...prev, data])
+      setError(null) // Clear any previous errors
       return data
     } catch (err: any) {
-      setError(err.message)
-      throw err
+      const message = err.message || 'Failed to create category'
+      setError(message)
+      throw new Error(message)
     }
   }
 
   const updateCategory = async (id: string, updates: Partial<Category>) => {
+    if (!user) {
+      const error = new Error('You must be logged in to update a category')
+      setError(error.message)
+      throw error
+    }
+
     try {
-      const { data, error } = await supabase.from("categories").update(updates).eq("id", id).select().single()
+      const { data, error } = await supabase
+        .from("categories")
+        .update({ 
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .eq("user_id", user.id) // Ensure user owns the category
+        .select()
+        .single()
 
       if (error) throw error
+      
+      if (!data) {
+        throw new Error('Category not found or access denied')
+      }
+
       setCategories((prev) => prev.map((cat) => (cat.id === id ? data : cat)))
+      setError(null) // Clear any previous errors
       return data
     } catch (err: any) {
-      setError(err.message)
-      throw err
+      const message = err.message || 'Failed to update category'
+      setError(message)
+      throw new Error(message)
     }
   }
 
   const deleteCategory = async (id: string) => {
+    if (!user) {
+      const error = new Error('You must be logged in to delete a category')
+      setError(error.message)
+      throw error
+    }
+
     try {
-      const { error } = await supabase.from("categories").delete().eq("id", id)
+      // First check if the category exists and belongs to the user
+      const { data: category, error: fetchError } = await supabase
+        .from("categories")
+        .select()
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .single()
+
+      if (fetchError || !category) {
+        throw new Error('Category not found or access denied')
+      }
+
+      const { error } = await supabase
+        .from("categories")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id) // Ensure user owns the category
 
       if (error) throw error
+
       setCategories((prev) => prev.filter((cat) => cat.id !== id))
+      setError(null) // Clear any previous errors
     } catch (err: any) {
-      setError(err.message)
-      throw err
+      const message = err.message || 'Failed to delete category'
+      setError(message)
+      throw new Error(message)
     }
   }
 
   useEffect(() => {
     fetchCategories()
-  }, [user?.id]) // Only depend on user.id, not the whole user object
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     categories,

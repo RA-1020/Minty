@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useFormatting } from "@/lib/hooks/use-formatting"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { TrendingUp, TrendingDown, Wallet, Target, AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +19,7 @@ export function Dashboard() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [categoryData, setCategoryData] = useState([])
+  const { formatCurrency, formatDate, getWeekStart } = useFormatting()
   const [monthlyData, setMonthlyData] = useState([])
   const [recentTransactions, setRecentTransactions] = useState([])
   const [budgetAlerts, setBudgetAlerts] = useState([])
@@ -44,26 +46,33 @@ export function Dashboard() {
           .select('*')
           .eq('user_id', user.id)
 
-        // Load categories
+        // Load categories with joined data
         const { data: categoriesData, error: categoriesError } = await supabase
-          .from('categories')
-          .select('*')
+          .from('transactions')
+          .select(`
+            category,
+            amount,
+            categories (
+              id,
+              name,
+              color
+            )
+          `)
           .eq('user_id', user.id)
+          .eq('type', 'expense')
 
-        if (transactionsError) console.error('Error loading transactions:', transactionsError)
-        if (budgetsError) console.error('Error loading budgets:', budgetsError)
-        if (categoriesError) console.error('Error loading categories:', categoriesError)
+        // Handle data silently in dashboard
+        const validTransactions = transactionsData || []
+        const validBudgets = budgetsData || []
+        const validCategories = categoriesData || []
 
-        const allTransactions = transactionsData || []
-        const allBudgets = budgetsData || []
-        const allCategories = categoriesData || []
-
-        setTransactions(allTransactions)
-        setBudgets(allBudgets)
-        setCategories(allCategories)
+        // Update state with valid data
+        setTransactions(validTransactions)
+        setBudgets(validBudgets)
+        setCategories(validCategories)
 
         // Process data for charts and summaries
-        processTransactionData(allTransactions, allCategories, allBudgets)
+        processTransactionData(validTransactions, validCategories, validBudgets)
         
       } catch (error) {
         console.error('Error:', error)
@@ -85,20 +94,22 @@ export function Dashboard() {
     const expenseTransactions = allTransactions.filter(t => t.type === 'expense')
     
     expenseTransactions.forEach(transaction => {
-      const categoryName = transaction.category || 'Other'
+      const categoryName = transaction.categories?.name || transaction.category || 'Other'
       categorySpending[categoryName] = (categorySpending[categoryName] || 0) + Math.abs(transaction.amount)
     })
 
-    const categoryChartData = Object.entries(categorySpending).map(([name, value], index) => {
-      const category = allCategories.find(c => c.name === name)
-      return {
-        name,
-        value: value as number,
-        color: category?.color || `hsl(${index * 45}, 70%, 50%)`
-      }
-    }).slice(0, 5) // Top 5 categories
-
-    setCategoryData(categoryChartData)
+      const categoryChartData = Object.entries(categorySpending)
+        .sort(([, a], [, b]) => (b as number) - (a as number)) // Sort by value descending
+        .map(([name, value], index) => {
+          const category = allCategories.find(c => c.name === name)
+          return {
+            name,
+            value: value as number,
+            formattedValue: formatCurrency(value as number),
+            color: category?.color || `hsl(${index * 45}, 70%, 50%)`
+          }
+        })
+        .slice(0, 5) // Top 5 categories    setCategoryData(categoryChartData)
 
     // Monthly trends (last 6 months)
     const monthlyTrends = {}
@@ -128,7 +139,10 @@ export function Dashboard() {
         month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short' }),
         income: (data as any).income,
         expenses: (data as any).expenses,
-        savings: (data as any).income - (data as any).expenses
+        savings: (data as any).income - (data as any).expenses,
+        formattedIncome: formatCurrency((data as any).income),
+        formattedExpenses: formatCurrency((data as any).expenses),
+        formattedSavings: formatCurrency((data as any).income - (data as any).expenses)
       }))
 
     setMonthlyData(monthlyChartData)
@@ -195,7 +209,7 @@ export function Dashboard() {
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${totalIncome.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalIncome)}</div>
             <p className="text-xs text-gray-600 dark:text-gray-400">This month</p>
           </CardContent>
         </Card>
@@ -206,7 +220,7 @@ export function Dashboard() {
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">${totalExpenses.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</div>
             <p className="text-xs text-gray-600 dark:text-gray-400">This month</p>
           </CardContent>
         </Card>
@@ -218,7 +232,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${totalSavings >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-              ${totalSavings.toLocaleString()}
+              {formatCurrency(totalSavings)}
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-400">This month</p>
           </CardContent>
@@ -268,12 +282,28 @@ export function Dashboard() {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
+                      nameKey="name"
+                      tooltipType="none"
                     >
                       {categoryData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <div className="flex flex-col">
+                                <span className="font-medium">{payload[0].name}</span>
+                                <span className="text-xs text-muted-foreground">{payload[0].payload.formattedValue}</span>
+                              </div>
+                            </div>
+                          )
+                        }
+                        return null
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -314,7 +344,37 @@ export function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <div className="grid gap-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="flex items-center gap-1">
+                                    <span className="h-2 w-2 rounded-full bg-[#22c55e]" />
+                                    <span className="font-medium">Income</span>
+                                  </span>
+                                  {payload[0].payload.formattedIncome}
+                                </div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="flex items-center gap-1">
+                                    <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
+                                    <span className="font-medium">Expenses</span>
+                                  </span>
+                                  {payload[0].payload.formattedExpenses}
+                                </div>
+                                <div className="flex items-center justify-between gap-2 border-t pt-2">
+                                  <span className="font-medium">Net</span>
+                                  {payload[0].payload.formattedSavings}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        }
+                        return null
+                      }}
+                    />
                     <Bar dataKey="income" fill="#22c55e" />
                     <Bar dataKey="expenses" fill="#ef4444" />
                   </BarChart>
@@ -354,9 +414,9 @@ export function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className={`font-medium ${transaction.type === 'income' ? "text-green-600" : "text-red-600"}`}>
-                        {transaction.type === 'income' ? "+" : ""}${Math.abs(transaction.amount).toFixed(2)}
+                        {transaction.type === 'income' ? "+" : ""}{formatCurrency(Math.abs(transaction.amount))}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{transaction.date}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(new Date(transaction.date))}</p>
                     </div>
                   </div>
                 ))
@@ -395,8 +455,8 @@ export function Dashboard() {
                     <div className="space-y-1">
                       <Progress value={Math.min(alert.percentage, 100)} className="h-2" />
                       <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                        <span>${alert.spent.toLocaleString()} spent</span>
-                        <span>${alert.limit.toLocaleString()} limit</span>
+                        <span>{formatCurrency(alert.spent)} spent</span>
+                        <span>{formatCurrency(alert.limit)} limit</span>
                       </div>
                     </div>
                   </div>

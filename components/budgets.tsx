@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { useFormatting } from "@/lib/hooks/use-formatting"
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export function Budgets() {
   const [editingBudget, setEditingBudget] = useState<any>(null)
 
   const { user } = useAuth()
+  const { formatCurrency, formatDate } = useFormatting()
 
   // ✅ FIXED: Removed categories from select query - only select existing columns
   useEffect(() => {
@@ -470,7 +472,7 @@ export function Budgets() {
               {/* Info about spent amount */}
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  <strong>Current spent amount:</strong> ${(editingBudget.spent_amount || 0).toLocaleString()}
+                  <strong>Current spent amount:</strong> {formatCurrency(editingBudget.spent_amount || 0)}
                 </p>
                 <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
                   Spent amounts are automatically calculated from your transactions and cannot be edited manually.
@@ -505,7 +507,7 @@ export function Budgets() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${budgets.reduce((sum, budget) => sum + (budget.total_amount || 0), 0).toLocaleString()}
+              {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.total_amount || 0), 0))}
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-400">Across all budgets</p>
           </CardContent>
@@ -516,7 +518,7 @@ export function Budgets() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              ${budgets.reduce((sum, budget) => sum + (budget.spent_amount || 0), 0).toLocaleString()}
+              {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.spent_amount || 0), 0))}
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-400">This period</p>
           </CardContent>
@@ -566,13 +568,13 @@ export function Budgets() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Spent: ${spentAmount.toLocaleString()}</span>
-                    <span>Budget: ${totalAmount.toLocaleString()}</span>
+                    <span>Spent: {formatCurrency(spentAmount)}</span>
+                    <span>Budget: {formatCurrency(totalAmount)}</span>
                   </div>
                   <Progress value={Math.min(percentage, 100)} className="h-2" />
                   <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                     <span>{percentage.toFixed(1)}% used</span>
-                    <span>${(totalAmount - spentAmount).toLocaleString()} remaining</span>
+                    <span>{formatCurrency(totalAmount - spentAmount)} remaining</span>
                   </div>
                 </div>
 

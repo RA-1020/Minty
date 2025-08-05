@@ -21,7 +21,21 @@ export interface UserProfile {
 }
 
 export function useProfile() {
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>({
+    id: '',
+    email: '',
+    full_name: null,
+    avatar_url: null,
+    currency: 'USD',
+    date_format: 'MM/dd/yyyy',
+    language: 'en',
+    theme: 'system',
+    timezone: 'UTC',
+    week_start_day: 1,
+    notification_preferences: {},
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()

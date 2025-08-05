@@ -1,9 +1,11 @@
+// categories.tsx - FIXED VERSION
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useFormatting } from "@/lib/hooks/use-formatting"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -42,14 +44,51 @@ const colorOptions = [
 export function Categories() {
   const { categories, loading, error, createCategory, updateCategory, deleteCategory } = useCategories()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<any>(null)
+  const [editingCategory, setEditingCategory] = useState<any>(null) // ✅ FIXED: This state controls edit dialog
   const [categoryStats, setCategoryStats] = useState<Record<string, any>>({})
   const [transactionsLoading, setTransactionsLoading] = useState(false)
+  const { formatCurrency } = useFormatting()
   const { user } = useAuth()
+  
+  // Load user profile for currency settings
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user?.id) return
+      
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('currency')
+          .eq('id', user.id)
+          .single()
+
+        if (profileError) {
+          console.error('Error loading profile:', profileError)
+          return
+        }
+
+        if (!profileData) {
+          console.error('No profile data found')
+          return
+        }
+      } catch (error) {
+        console.error('Error in loadUserProfile:', error)
+      }
+    }
+
+    loadUserProfile()
+  }, [user?.id])
 
   // ✅ FIXED: Memoize loadCategoryStats to prevent infinite loops
   const loadCategoryStats = useCallback(async () => {
-    if (!user?.id || !categories || categories.length === 0) {
+    if (!user?.id) {
+      setTransactionsLoading(false)
+      return
+    }
+
+    // Initialize with empty stats if no categories
+    if (!categories || categories.length === 0) {
+      setCategoryStats({})
       setTransactionsLoading(false)
       return
     }
@@ -66,16 +105,34 @@ export function Categories() {
       const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear
       const endDate = `${nextYear}-${nextMonth.toString().padStart(2, '0')}-01`
       
-      const { data: transactions, error } = await supabase
+      const { data: transactions, error: transactionError } = await supabase
         .from('transactions')
-        .select('*')
+        .select(`
+          id,
+          amount,
+          type,
+          date,
+          category_id,
+          user_id,
+          categories (
+            id,
+            name,
+            type,
+            color
+          )
+        `)
         .eq('user_id', user.id)
         .gte('date', startDate)
         .lt('date', endDate)
 
-      if (error) {
-        console.error('Error loading transactions:', error)
-        return
+      if (transactionError) {
+        console.error('Error loading transactions:', transactionError.message)
+        throw new Error(transactionError.message)
+      }
+
+      if (!transactions) {
+        console.error('No transactions data received')
+        throw new Error('No transactions data received')
       }
 
       // Calculate stats for each category
@@ -102,14 +159,14 @@ export function Categories() {
     } finally {
       setTransactionsLoading(false)
     }
-  }, [user?.id, categories?.length])
+  }, [user?.id, categories])
 
-  // ✅ FIXED: Initial load effect - REMOVE loadCategoryStats dependency to prevent infinite loop
+  // ✅ FIXED: Initial load effect
   useEffect(() => {
     if (categories && categories.length > 0) {
       loadCategoryStats()
     }
-  }, [user?.id, categories?.length]) // Removed loadCategoryStats dependency
+  }, [loadCategoryStats])
 
   // ✅ FIXED: Separate effect for real-time listener
   useEffect(() => {
@@ -136,7 +193,7 @@ export function Categories() {
       console.log('Cleaning up transaction listener')
       supabase.removeChannel(transactionChannel)
     }
-  }, [user?.id]) // Removed loadCategoryStats dependency
+  }, [user?.id, loadCategoryStats])
 
   const getCategoryStatus = (spent: number, limit: number, threshold: number) => {
     if (limit === 0) return { status: "no-limit", color: "default" }
@@ -162,6 +219,7 @@ export function Categories() {
     }
   }
 
+  // ✅ FIXED: Make sure this function is properly defined
   const handleUpdateCategory = async (formData: FormData) => {
     if (!editingCategory) return
     
@@ -174,7 +232,7 @@ export function Categories() {
         alert_threshold: Number.parseFloat(formData.get("threshold") as string) || 90,
         type: formData.get("type") as "income" | "expense",
       })
-      setEditingCategory(null)
+      setEditingCategory(null) // ✅ FIXED: Close the edit dialog
     } catch (error) {
       console.error("Error updating category:", error)
     }
@@ -188,10 +246,15 @@ export function Categories() {
     }
   }
 
+  // ✅ FIXED: Add explicit event handler for edit button
+  const handleEditClick = (category: any) => {
+    console.log('Edit button clicked for category:', category.name)
+    setEditingCategory(category)
+  }
+
   const expenseCategories = categories?.filter((cat) => cat.type === "expense") || []
   const incomeCategories = categories?.filter((cat) => cat.type === "income") || []
 
-  // ✅ FIXED: Show loading only when categories are loading, not transactions
   if (loading && !categories) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
@@ -203,12 +266,23 @@ export function Categories() {
     )
   }
 
-  if (error) {
+  if (error && !loading && user?.id) {
+    // Only show error if there's an error, we're not loading, and user is logged in
     return (
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-red-800 font-medium">Error loading categories</h3>
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+            <h3 className="text-red-800 font-medium">Error loading categories</h3>
+          </div>
           <p className="text-red-600 text-sm mt-1">{error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={loadCategoryStats}
+          >
+            Try Again
+          </Button>
         </div>
       </div>
     )
@@ -216,7 +290,6 @@ export function Categories() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* ✅ FIXED: Show small loading indicator for transactions */}
       {transactionsLoading && (
         <div className="flex items-center justify-center py-2">
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -301,6 +374,99 @@ export function Categories() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* ✅ FIXED: Edit Category Dialog */}
+      <Dialog open={!!editingCategory} onOpenChange={(open) => !open && setEditingCategory(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>Update category details and settings</DialogDescription>
+          </DialogHeader>
+          {editingCategory && (
+            <form action={handleUpdateCategory} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Category Name</Label>
+                <Input 
+                  id="edit-name" 
+                  name="name" 
+                  placeholder="e.g., Groceries" 
+                  defaultValue={editingCategory.name}
+                  required 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-type">Type</Label>
+                  <Select name="type" defaultValue={editingCategory.type} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="expense">Expense</SelectItem>
+                      <SelectItem value="income">Income</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-color">Color</Label>
+                  <Select name="color" defaultValue={editingCategory.color} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose color" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {colorOptions.map((color) => (
+                        <SelectItem key={color} value={color}>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 rounded" style={{ backgroundColor: color }} />
+                            <span>{color}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-limit">Monthly Limit (Optional)</Label>
+                <Input 
+                  id="edit-limit" 
+                  name="limit" 
+                  type="number" 
+                  step="0.01" 
+                  placeholder="0.00"
+                  defaultValue={editingCategory.monthly_limit || ''}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="edit-alertEnabled" 
+                  name="alertEnabled" 
+                  defaultChecked={editingCategory.alert_enabled}
+                />
+                <Label htmlFor="edit-alertEnabled">Enable spending alerts</Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-threshold">Alert Threshold (%)</Label>
+                <Input 
+                  id="edit-threshold" 
+                  name="threshold" 
+                  type="number" 
+                  placeholder="90" 
+                  min="1" 
+                  max="100"
+                  defaultValue={editingCategory.alert_threshold || 90}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setEditingCategory(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Update Category</Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Category Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -388,7 +554,8 @@ export function Categories() {
                               : "On Track"}
                       </Badge>
                       <div className="flex space-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => setEditingCategory(category)}>
+                        {/* ✅ FIXED: Use explicit event handler */}
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(category)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(category.id)}>
@@ -400,15 +567,15 @@ export function Categories() {
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Spent: ${currentSpent.toLocaleString()}</span>
-                      {category.monthly_limit > 0 && <span>Limit: ${category.monthly_limit.toLocaleString()}</span>}
+                      <span>Spent: {formatCurrency(currentSpent)}</span>
+                      {category.monthly_limit > 0 && <span>Limit: {formatCurrency(category.monthly_limit)}</span>}
                     </div>
                     {category.monthly_limit > 0 && (
                       <>
                         <Progress value={Math.min(percentage, 100)} className="h-2" />
                         <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                           <span>{percentage.toFixed(1)}% used</span>
-                          <span>${(category.monthly_limit - currentSpent).toLocaleString()} remaining</span>
+                          <span>{formatCurrency(category.monthly_limit - currentSpent)} remaining</span>
                         </div>
                       </>
                     )}
@@ -456,11 +623,12 @@ export function Categories() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <div className="text-right">
-                        <p className="font-medium text-green-600">+${currentIncome.toLocaleString()}</p>
+                        <p className="font-medium text-green-600">+{formatCurrency(currentIncome)}</p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">This month</p>
                       </div>
                       <div className="flex space-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => setEditingCategory(category)}>
+                        {/* ✅ FIXED: Use explicit event handler */}
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(category)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(category.id)}>

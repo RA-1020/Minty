@@ -1,36 +1,60 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, Suspense, useCallback } from "react"
 import { Sidebar } from "@/components/sidebar"
-import { Dashboard } from "@/components/dashboard"
-import { Budgets } from "@/components/budgets"
-import { Transactions } from "@/components/transactions"
-import { Categories } from "@/components/categories"
-import { Settings } from "@/components/settings"
 import { AuthForm } from "@/components/auth-form"
 import { SupabaseTest } from "@/components/supabase-test"
 import { SetupGuide } from "@/components/setup-guide"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { useAuth } from "@/lib/auth-context"
-import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import dynamic from 'next/dynamic'
 
-function LoadingSpinner({ message = "Loading..." }: { message?: string }) {
-  return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">{message}</p>
-      </div>
-    </div>
-  )
-}
+// Dynamically import components with suspense
+const DynamicDashboard = dynamic(() => import("@/components/dashboard").then(mod => ({ default: mod.Dashboard })), {
+  ssr: false,
+  loading: () => <LoadingSpinner message="Loading dashboard..." />
+})
+
+const DynamicBudgets = dynamic(() => import("@/components/budgets").then(mod => ({ default: mod.Budgets })), {
+  ssr: false,
+  loading: () => <LoadingSpinner message="Loading budgets..." />
+})
+
+const DynamicTransactions = dynamic(() => import("@/components/transactions").then(mod => ({ default: mod.Transactions })), {
+  ssr: false,
+  loading: () => <LoadingSpinner message="Loading transactions..." />
+})
+
+const DynamicCategories = dynamic(() => import("@/components/categories").then(mod => ({ default: mod.Categories })), {
+  ssr: false,
+  loading: () => <LoadingSpinner message="Loading categories..." />
+})
+
+const DynamicSettings = dynamic(() => import("@/components/settings"), {
+  ssr: false,
+  loading: () => <LoadingSpinner message="Loading settings..." />
+})
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState("dashboard")
   const [showSupabaseTest, setShowSupabaseTest] = useState(false)
   const [showSetupGuide, setShowSetupGuide] = useState(false)
   const { user, loading } = useAuth()
+
+  // Memoize state update handlers
+  const handlePageChange = useCallback((page: string) => {
+    setCurrentPage(page)
+  }, [])
+
+  const toggleSupabaseTest = useCallback((show: boolean) => {
+    setShowSupabaseTest(show)
+  }, [])
+
+  const toggleSetupGuide = useCallback((show: boolean) => {
+    setShowSetupGuide(show)
+  }, [])
 
   if (loading) {
     return <LoadingSpinner message="Checking authentication..." />
@@ -46,7 +70,7 @@ function AppContent() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Let's verify your Supabase connection is working properly
             </p>
-            <Button variant="outline" onClick={() => setShowSupabaseTest(false)}>
+            <Button variant="outline" onClick={() => toggleSupabaseTest(false)}>
               Back to App
             </Button>
           </div>
@@ -61,7 +85,7 @@ function AppContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-6">
         <div className="mb-4">
-          <Button variant="outline" onClick={() => setShowSetupGuide(false)}>
+          <Button variant="outline" onClick={() => toggleSetupGuide(false)}>
             Back to App
           </Button>
         </div>
@@ -74,10 +98,10 @@ function AppContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="absolute top-4 right-4 space-x-2">
-          <Button variant="outline" onClick={() => setShowSetupGuide(true)}>
+          <Button variant="outline" onClick={() => toggleSetupGuide(true)}>
             Setup Guide
           </Button>
-          <Button variant="outline" onClick={() => setShowSupabaseTest(true)}>
+          <Button variant="outline" onClick={() => toggleSupabaseTest(true)}>
             Test Connection
           </Button>
         </div>
@@ -89,64 +113,36 @@ function AppContent() {
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":
-        return (
-          <Suspense fallback={<LoadingSpinner message="Loading dashboard..." />}>
-            <ErrorBoundary>
-              <Dashboard />
-            </ErrorBoundary>
-          </Suspense>
-        )
+        return <DynamicDashboard />
       case "budgets":
-        return (
-          <Suspense fallback={<LoadingSpinner message="Loading budgets..." />}>
-            <ErrorBoundary>
-              <Budgets />
-            </ErrorBoundary>
-          </Suspense>
-        )
+        return <DynamicBudgets />
       case "transactions":
-        return (
-          <Suspense fallback={<LoadingSpinner message="Loading transactions..." />}>
-            <ErrorBoundary>
-              <Transactions />
-            </ErrorBoundary>
-          </Suspense>
-        )
+        return <DynamicTransactions />
       case "categories":
-        return (
-          <Suspense fallback={<LoadingSpinner message="Loading categories..." />}>
-            <ErrorBoundary>
-              <Categories />
-            </ErrorBoundary>
-          </Suspense>
-        )
+        return <DynamicCategories />
       case "settings":
-        return (
-          <Suspense fallback={<LoadingSpinner message="Loading settings..." />}>
-            <ErrorBoundary>
-              <Settings />
-            </ErrorBoundary>
-          </Suspense>
-        )
+        return <DynamicSettings />
       default:
-        return (
-          <Suspense fallback={<LoadingSpinner message="Loading dashboard..." />}>
-            <ErrorBoundary>
-              <Dashboard />
-            </ErrorBoundary>
-          </Suspense>
-        )
+        return <DynamicDashboard />
     }
   }
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-      <main className="flex-1 overflow-auto">{renderPage()}</main>
+      <Sidebar currentPage={currentPage} setCurrentPage={handlePageChange} />
+      <main className="flex-1 overflow-auto">
+        <ErrorBoundary>
+          {renderPage()}
+        </ErrorBoundary>
+      </main>
     </div>
   )
 }
 
 export default function Home() {
-  return <AppContent />
+  return (
+    <Suspense fallback={<LoadingSpinner message="Loading app..." />}>
+      <AppContent />
+    </Suspense>
+  )
 }
