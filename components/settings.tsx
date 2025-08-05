@@ -16,6 +16,9 @@ import { useProfile } from "@/lib/hooks/use-profile"
 import { useAuth } from "@/lib/auth-context"
 import { createClient } from "@/lib/supabase/client"
 import { User, Bell, Globe, Download, Upload, Save, Moon, Sun, Loader2, Camera, CheckCircle } from "lucide-react"
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import { toast } from 'sonner'
 
 const supabase = createClient()
 
@@ -158,6 +161,286 @@ export default function Settings() {
     { value: 1, label: "Monday" },
     { value: 6, label: "Saturday" },
   ]
+
+  const handleExportCSV = async () => {
+    try {
+      if (!user) {
+        toast.error("You must be logged in to export data")
+        return
+      }
+
+      toast.loading("Preparing CSV export...")
+
+      // Fetch all user data
+      const [transactionsResult, budgetsResult, categoriesResult] = await Promise.all([
+        supabase
+          .from("transactions")
+          .select(`
+            *,
+            category:categories(name, color)
+          `)
+          .eq("user_id", user.id)
+          .order("date", { ascending: false }),
+        supabase
+          .from("budgets")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("categories")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("name", { ascending: true })
+      ])
+
+      if (transactionsResult.error) throw transactionsResult.error
+      if (budgetsResult.error) throw budgetsResult.error
+      if (categoriesResult.error) throw categoriesResult.error
+
+      const transactions = transactionsResult.data || []
+      const budgets = budgetsResult.data || []
+      const categories = categoriesResult.data || []
+
+      // Create CSV content
+      let csvContent = "data:text/csv;charset=utf-8,"
+
+      // Transactions CSV
+      csvContent += "=== TRANSACTIONS ===\n"
+      csvContent += "Date,Description,Amount,Type,Category,Notes\n"
+      transactions.forEach(transaction => {
+        const date = new Date(transaction.date).toLocaleDateString()
+        const description = `"${transaction.description.replace(/"/g, '""')}"`
+        const amount = transaction.amount
+        const type = transaction.type
+        const category = transaction.category?.name || "Uncategorized"
+        const notes = `"${(transaction.notes || "").replace(/"/g, '""')}"`
+        csvContent += `${date},${description},${amount},${type},${category},${notes}\n`
+      })
+
+      // Budgets CSV
+      csvContent += "\n=== BUDGETS ===\n"
+      csvContent += "Name,Type,Amount,Start Date,End Date\n"
+      budgets.forEach(budget => {
+        const name = `"${budget.name.replace(/"/g, '""')}"`
+        const type = budget.type
+        const amount = budget.total_amount
+        const startDate = new Date(budget.start_date).toLocaleDateString()
+        const endDate = new Date(budget.end_date).toLocaleDateString()
+        csvContent += `${name},${type},${amount},${startDate},${endDate}\n`
+      })
+
+      // Categories CSV
+      csvContent += "\n=== CATEGORIES ===\n"
+      csvContent += "Name,Type,Color,Icon\n"
+      categories.forEach(category => {
+        const name = `"${category.name.replace(/"/g, '""')}"`
+        const type = category.type
+        const color = category.color
+        const icon = category.icon || ""
+        csvContent += `${name},${type},${color},${icon}\n`
+      })
+
+      // Download CSV
+      const encodedUri = encodeURI(csvContent)
+      const link = document.createElement("a")
+      link.setAttribute("href", encodedUri)
+      link.setAttribute("download", `minty-export-${new Date().toISOString().split('T')[0]}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast.dismiss()
+      toast.success("CSV export completed successfully!")
+
+    } catch (error) {
+      console.error("Error exporting CSV:", error)
+      toast.dismiss()
+      toast.error("Failed to export CSV. Please try again.")
+    }
+  }
+
+  const handleExportPDF = async () => {
+    try {
+      if (!user) {
+        toast.error("You must be logged in to export data")
+        return
+      }
+
+      toast.loading("Generating PDF report...")
+
+      // Fetch all user data
+      const [transactionsResult, budgetsResult, categoriesResult] = await Promise.all([
+        supabase
+          .from("transactions")
+          .select(`
+            *,
+            category:categories(name, color)
+          `)
+          .eq("user_id", user.id)
+          .order("date", { ascending: false })
+          .limit(50), // Limit for PDF readability
+        supabase
+          .from("budgets")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("categories")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("name", { ascending: true })
+      ])
+
+      if (transactionsResult.error) throw transactionsResult.error
+      if (budgetsResult.error) throw budgetsResult.error
+      if (categoriesResult.error) throw categoriesResult.error
+
+      const transactions = transactionsResult.data || []
+      const budgets = budgetsResult.data || []
+      const categories = categoriesResult.data || []
+
+      // Create PDF
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.width
+      let yPosition = 20
+
+      // Title
+      doc.setFontSize(20)
+      doc.setFont("helvetica", "bold")
+      doc.text("Minty Financial Report", pageWidth / 2, yPosition, { align: "center" })
+      yPosition += 10
+
+      // Date
+      doc.setFontSize(12)
+      doc.setFont("helvetica", "normal")
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: "center" })
+      yPosition += 20
+
+      // Summary Statistics
+      const totalIncome = transactions
+        .filter(t => t.type === "income")
+        .reduce((sum, t) => sum + t.amount, 0)
+      
+      const totalExpenses = transactions
+        .filter(t => t.type === "expense")
+        .reduce((sum, t) => sum + t.amount, 0)
+
+      const netAmount = totalIncome - totalExpenses
+
+      doc.setFontSize(14)
+      doc.setFont("helvetica", "bold")
+      doc.text("Financial Summary", 20, yPosition)
+      yPosition += 10
+
+      doc.setFontSize(10)
+      doc.setFont("helvetica", "normal")
+      doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`Total Expenses: $${totalExpenses.toFixed(2)}`, 20, yPosition)
+      yPosition += 6
+      doc.text(`Net Amount: $${netAmount.toFixed(2)}`, 20, yPosition)
+      yPosition += 15
+
+      // Recent Transactions Table
+      if (transactions.length > 0) {
+        doc.setFontSize(14)
+        doc.setFont("helvetica", "bold")
+        doc.text("Recent Transactions (Last 50)", 20, yPosition)
+        yPosition += 10
+
+        const transactionData = transactions.map(transaction => [
+          new Date(transaction.date).toLocaleDateString(),
+          transaction.description.substring(0, 30) + (transaction.description.length > 30 ? "..." : ""),
+          transaction.type === "income" ? `+$${transaction.amount.toFixed(2)}` : `-$${transaction.amount.toFixed(2)}`,
+          transaction.category?.name || "Uncategorized"
+        ])
+
+        autoTable(doc, {
+          head: [['Date', 'Description', 'Amount', 'Category']],
+          body: transactionData,
+          startY: yPosition,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [34, 197, 94] },
+          margin: { left: 20, right: 20 }
+        })
+
+        yPosition = (doc as any).lastAutoTable.finalY + 15
+      }
+
+      // Check if we need a new page
+      if (yPosition > 250) {
+        doc.addPage()
+        yPosition = 20
+      }
+
+      // Active Budgets Table
+      if (budgets.length > 0) {
+        doc.setFontSize(14)
+        doc.setFont("helvetica", "bold")
+        doc.text("Active Budgets", 20, yPosition)
+        yPosition += 10
+
+        const budgetData = budgets.map(budget => [
+          budget.name,
+          budget.type,
+          `$${budget.total_amount.toFixed(2)}`,
+          new Date(budget.start_date).toLocaleDateString(),
+          new Date(budget.end_date).toLocaleDateString()
+        ])
+
+        autoTable(doc, {
+          head: [['Name', 'Type', 'Amount', 'Start Date', 'End Date']],
+          body: budgetData,
+          startY: yPosition,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [59, 130, 246] },
+          margin: { left: 20, right: 20 }
+        })
+
+        yPosition = (doc as any).lastAutoTable.finalY + 15
+      }
+
+      // Check if we need a new page
+      if (yPosition > 250) {
+        doc.addPage()
+        yPosition = 20
+      }
+
+      // Categories Table
+      if (categories.length > 0) {
+        doc.setFontSize(14)
+        doc.setFont("helvetica", "bold")
+        doc.text("Categories", 20, yPosition)
+        yPosition += 10
+
+        const categoryData = categories.map(category => [
+          category.name,
+          category.type,
+          category.color
+        ])
+
+        autoTable(doc, {
+          head: [['Name', 'Type', 'Color']],
+          body: categoryData,
+          startY: yPosition,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [168, 85, 247] },
+          margin: { left: 20, right: 20 }
+        })
+      }
+
+      // Save PDF
+      doc.save(`minty-report-${new Date().toISOString().split('T')[0]}.pdf`)
+
+      toast.dismiss()
+      toast.success("PDF report generated successfully!")
+
+    } catch (error) {
+      console.error("Error generating PDF:", error)
+      toast.dismiss()
+      toast.error("Failed to generate PDF report. Please try again.")
+    }
+  }
 
   // Handle profile image upload
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -713,12 +996,15 @@ export default function Settings() {
                     <Download className="mr-2 h-4 w-4" />
                     Export as CSV
                   </Button>
-                  <Button variant="outline" className="w-full justify-start bg-transparent" disabled>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export as PDF Report
-                    <Badge variant="secondary" className="ml-2">
-                      Coming Soon
-                    </Badge>
+
+
+                  <Button 
+                      variant="outline" 
+                     className="w-full justify-start bg-transparent" 
+                    onClick={handleExportPDF}
+                    >
+                <Download className="mr-2 h-4 w-4" />
+                  Export as PDF Report
                   </Button>
                 </div>
               </div>
