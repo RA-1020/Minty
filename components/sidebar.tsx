@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LayoutDashboard, Wallet, Receipt, Tags, Settings, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, Wallet, Receipt, Tags, Settings, LogOut, Menu, X, MessageCircle } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 
@@ -20,6 +20,7 @@ export function Sidebar({ currentPage, setCurrentPage }: SidebarProps) {
     { id: "budgets", label: "Budgets", icon: Wallet },
     { id: "transactions", label: "Transactions", icon: Receipt },
     { id: "categories", label: "Categories", icon: Tags },
+    { id: "chat", label: "AI Assistant", icon: MessageCircle },
     { id: "settings", label: "Settings", icon: Settings },
   ]
 

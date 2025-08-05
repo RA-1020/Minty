@@ -37,6 +37,11 @@ const DynamicSettings = dynamic(() => import("@/components/settings"), {
   loading: () => <LoadingSpinner message="Loading settings..." />
 })
 
+const DynamicChatBot = dynamic(() => import("@/components/financial-chat-bot"), {
+  ssr: false,
+  loading: () => <LoadingSpinner message="Loading AI assistant..." />
+})
+
 function AppContent() {
   const [currentPage, setCurrentPage] = useState("dashboard")
   const [showSupabaseTest, setShowSupabaseTest] = useState(false)
@@ -122,6 +127,8 @@ function AppContent() {
         return <DynamicCategories />
       case "settings":
         return <DynamicSettings />
+      case "chat":
+        return <DynamicChatBot />
       default:
         return <DynamicDashboard />
     }
