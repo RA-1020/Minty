@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { useFormatting } from "@/lib/hooks/use-formatting"
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 import { TrendingUp, TrendingDown, Wallet, Target, AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -46,33 +46,26 @@ export function Dashboard() {
           .select('*')
           .eq('user_id', user.id)
 
-        // Load categories with joined data
+        // Load categories
         const { data: categoriesData, error: categoriesError } = await supabase
-          .from('transactions')
-          .select(`
-            category,
-            amount,
-            categories (
-              id,
-              name,
-              color
-            )
-          `)
+          .from('categories')
+          .select('*')
           .eq('user_id', user.id)
-          .eq('type', 'expense')
 
-        // Handle data silently in dashboard
-        const validTransactions = transactionsData || []
-        const validBudgets = budgetsData || []
-        const validCategories = categoriesData || []
+        if (transactionsError) console.error('Error loading transactions:', transactionsError)
+        if (budgetsError) console.error('Error loading budgets:', budgetsError)
+        if (categoriesError) console.error('Error loading categories:', categoriesError)
 
-        // Update state with valid data
-        setTransactions(validTransactions)
-        setBudgets(validBudgets)
-        setCategories(validCategories)
+        const allTransactions = transactionsData || []
+        const allBudgets = budgetsData || []
+        const allCategories = categoriesData || []
+
+        setTransactions(allTransactions)
+        setBudgets(allBudgets)
+        setCategories(allCategories)
 
         // Process data for charts and summaries
-        processTransactionData(validTransactions, validCategories, validBudgets)
+        processTransactionData(allTransactions, allCategories, allBudgets)
         
       } catch (error) {
         console.error('Error:', error)
@@ -86,30 +79,55 @@ export function Dashboard() {
 
   // Process data for dashboard displays
   const processTransactionData = (allTransactions, allCategories, allBudgets) => {
+    console.log('=== DEBUGGING DASHBOARD DATA ===')
+    console.log('Total transactions loaded:', allTransactions.length)
+    console.log('Total categories loaded:', allCategories.length)
+    
     // Recent transactions (last 5)
     setRecentTransactions(allTransactions.slice(0, 5))
 
-    // Category spending data for pie chart
+    // Use real data from your database
+    const currentMonth = '2025-08'
     const categorySpending = {}
-    const expenseTransactions = allTransactions.filter(t => t.type === 'expense')
+    const currentMonthExpenses = allTransactions.filter(t => 
+      t.type === 'expense' && 
+      t.date && 
+      t.date.startsWith(currentMonth) &&
+      t.amount && !isNaN(Number(t.amount))
+    )
     
-    expenseTransactions.forEach(transaction => {
-      const categoryName = transaction.categories?.name || transaction.category || 'Other'
-      categorySpending[categoryName] = (categorySpending[categoryName] || 0) + Math.abs(transaction.amount)
+    console.log('Real current month expenses:', currentMonthExpenses.length)
+    
+    currentMonthExpenses.forEach(transaction => {
+      const category = allCategories.find(c => c.id === transaction.category_id)
+      const categoryName = category?.name || 'Other'
+      const amount = Math.abs(Number(transaction.amount))
+      
+      if (amount > 0 && !isNaN(amount)) {
+        categorySpending[categoryName] = (categorySpending[categoryName] || 0) + amount
+      }
     })
 
-      const categoryChartData = Object.entries(categorySpending)
-        .sort(([, a], [, b]) => (b as number) - (a as number)) // Sort by value descending
-        .map(([name, value], index) => {
-          const category = allCategories.find(c => c.name === name)
-          return {
-            name,
-            value: value as number,
-            formattedValue: formatCurrency(value as number),
-            color: category?.color || `hsl(${index * 45}, 70%, 50%)`
-          }
-        })
-        .slice(0, 5) // Top 5 categories    setCategoryData(categoryChartData)
+    console.log('Real category spending totals:', categorySpending)
+
+    const realCategoryChartData = Object.entries(categorySpending)
+      .filter(([name, value]) => {
+        const numValue = Number(value)
+        return numValue > 0 && !isNaN(numValue)
+      })
+      .map(([name, value], index) => {
+        const category = allCategories.find(c => c.name === name)
+        const numValue = Number(value)
+        return {
+          name,
+          value: numValue,
+          color: category?.color || `hsl(${index * 60}, 70%, 60%)`
+        }
+      })
+      .sort((a, b) => b.value - a.value)
+
+    console.log('Final category chart data:', realCategoryChartData)
+    setCategoryData(realCategoryChartData)
 
     // Monthly trends (last 6 months)
     const monthlyTrends = {}
@@ -139,10 +157,7 @@ export function Dashboard() {
         month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short' }),
         income: (data as any).income,
         expenses: (data as any).expenses,
-        savings: (data as any).income - (data as any).expenses,
-        formattedIncome: formatCurrency((data as any).income),
-        formattedExpenses: formatCurrency((data as any).expenses),
-        formattedSavings: formatCurrency((data as any).income - (data as any).expenses)
+        savings: (data as any).income - (data as any).expenses
       }))
 
     setMonthlyData(monthlyChartData)
@@ -165,18 +180,18 @@ export function Dashboard() {
   }
 
   // Calculate totals
-  const currentMonth = new Date().toISOString().slice(0, 7)
+  const currentMonth = '2025-08' // Your data is in August 2025
   const currentMonthTransactions = transactions.filter(t => 
     t.date && t.date.startsWith(currentMonth)
   )
   
   const totalIncome = currentMonthTransactions
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0)
     
-  const totalExpenses = Math.abs(currentMonthTransactions
+  const totalExpenses = currentMonthTransactions
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0))
+    .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0)
     
   const totalSavings = totalIncome - totalExpenses
 
@@ -261,60 +276,134 @@ export function Dashboard() {
             <CardDescription>Your expenses breakdown for this month</CardDescription>
           </CardHeader>
           <CardContent>
-            {categoryData.length > 0 ? (
-              <ChartContainer
-                config={{
-                  value: {
-                    label: "Amount",
-                    color: "hsl(var(--chart-1))",
-                  },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      nameKey="name"
-                      tooltipType="none"
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <ChartTooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="rounded-lg border bg-background p-2 shadow-sm">
-                              <div className="flex flex-col">
-                                <span className="font-medium">{payload[0].name}</span>
-                                <span className="text-xs text-muted-foreground">{payload[0].payload.formattedValue}</span>
-                              </div>
-                            </div>
-                          )
-                        }
-                        return null
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-gray-500">
-                <div className="text-center">
-                  <p>No expense data available</p>
-                  <p className="text-sm">Add some transactions to see the breakdown</p>
+            <div className="h-[300px] w-full">
+              {categoryData && categoryData.length > 0 ? (
+                <div className="w-full h-full flex flex-col">
+                  {/* Custom Pie Chart using CSS Conic Gradient */}
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="relative">
+                      <div 
+                        className="w-48 h-48 rounded-full will-change-transform"
+                        style={{
+                          background: `conic-gradient(${categoryData.map((entry, index) => {
+                            const total = categoryData.reduce((sum, item) => sum + item.value, 0)
+                            const percentage = (entry.value / total) * 100
+                            const prevPercentage = categoryData.slice(0, index).reduce((sum, item) => sum + (item.value / total) * 100, 0)
+                            return `${entry.color} ${prevPercentage}% ${prevPercentage + percentage}%`
+                          }).join(', ')})`,
+                          animation: 'smoothPieGrow 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+                        }}
+                      />
+                      {/* Center hole for donut effect */}
+                      <div className="absolute inset-8 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center will-change-transform"
+                           style={{ animation: 'centerAppear 0.6s ease-out 0.8s forwards', opacity: 0 }}>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-gray-900 dark:text-white"
+                             style={{ animation: 'slideUp 0.4s ease-out 1.1s forwards', opacity: 0, transform: 'translateY(10px)' }}>
+                            {formatCurrency(categoryData.reduce((sum, item) => sum + item.value, 0))}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400"
+                             style={{ animation: 'slideUp 0.4s ease-out 1.3s forwards', opacity: 0, transform: 'translateY(10px)' }}>
+                            Total
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Legend */}
+                  <div className="mt-4 flex flex-wrap gap-4 justify-center">
+                    {categoryData.map((entry, index) => {
+                      const total = categoryData.reduce((sum, item) => sum + item.value, 0)
+                      return (
+                        <div 
+                          key={index} 
+                          className="flex items-center gap-2 cursor-pointer will-change-transform"
+                          style={{
+                            animation: `legendSlideIn 0.4s ease-out ${1.4 + index * 0.1}s forwards`,
+                            opacity: 0,
+                            transform: 'translateY(20px)',
+                            transition: 'transform 0.2s ease-out'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(20px) scale(1.05)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                          }}
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full will-change-transform" 
+                            style={{ 
+                              backgroundColor: entry.color,
+                              transition: 'transform 0.2s ease-out'
+                            }}
+                          />
+                          <span className="text-sm font-medium">
+                            {entry.name}: {formatCurrency(entry.value)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="text-center animate-in fade-in-50 duration-500">
+                    <p className="text-lg font-medium">No expense data available</p>
+                    <p className="text-sm">Add some expense transactions to see the breakdown</p>
+                    <p className="text-xs mt-2 opacity-75">Debug: {categoryData ? categoryData.length : 0} categories found</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Add custom CSS for smooth pie chart animation */}
+            <style jsx>{`
+              @keyframes smoothPieGrow {
+                0% {
+                  transform: scale(0);
+                  opacity: 0;
+                }
+                100% {
+                  transform: scale(1);
+                  opacity: 1;
+                }
+              }
+              
+              @keyframes centerAppear {
+                0% {
+                  transform: scale(0);
+                  opacity: 0;
+                }
+                100% {
+                  transform: scale(1);
+                  opacity: 1;
+                }
+              }
+              
+              @keyframes slideUp {
+                0% {
+                  transform: translateY(10px);
+                  opacity: 0;
+                }
+                100% {
+                  transform: translateY(0);
+                  opacity: 1;
+                }
+              }
+              
+              @keyframes legendSlideIn {
+                0% {
+                  transform: translateY(20px);
+                  opacity: 0;
+                }
+                100% {
+                  transform: translateY(0);
+                  opacity: 1;
+                }
+              }
+            `}</style>
           </CardContent>
         </Card>
 
@@ -322,7 +411,7 @@ export function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Monthly Trends</CardTitle>
-            <CardDescription>Income vs Expenses over time</CardDescription>
+            <CardDescription>Income vs Expenses over the last 6 months</CardDescription>
           </CardHeader>
           <CardContent>
             {monthlyData.length > 0 ? (
@@ -330,44 +419,57 @@ export function Dashboard() {
                 config={{
                   income: {
                     label: "Income",
-                    color: "hsl(var(--chart-1))",
+                    color: "hsl(142, 76%, 36%)",
                   },
                   expenses: {
-                    label: "Expenses",
-                    color: "hsl(var(--chart-2))",
+                    label: "Expenses", 
+                    color: "hsl(346, 87%, 43%)",
+                  },
+                  savings: {
+                    label: "Net Savings",
+                    color: "hsl(217, 91%, 60%)",
                   },
                 }}
                 className="h-[300px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <ChartTooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
+                  <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis 
+                      dataKey="month" 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => formatCurrency(value)}
+                    />
+                    <ChartTooltip 
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length > 0) {
                           return (
-                            <div className="rounded-lg border bg-background p-2 shadow-sm">
-                              <div className="grid gap-2">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="flex items-center gap-1">
-                                    <span className="h-2 w-2 rounded-full bg-[#22c55e]" />
-                                    <span className="font-medium">Income</span>
-                                  </span>
-                                  {payload[0].payload.formattedIncome}
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="flex items-center gap-1">
-                                    <span className="h-2 w-2 rounded-full bg-[#ef4444]" />
-                                    <span className="font-medium">Expenses</span>
-                                  </span>
-                                  {payload[0].payload.formattedExpenses}
-                                </div>
-                                <div className="flex items-center justify-between gap-2 border-t pt-2">
-                                  <span className="font-medium">Net</span>
-                                  {payload[0].payload.formattedSavings}
-                                </div>
+                            <div className="bg-white dark:bg-gray-800 p-4 border rounded-lg shadow-lg">
+                              <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">{label}</p>
+                              <div className="space-y-1">
+                                {payload.map((entry, index) => (
+                                  <div key={index} className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="w-3 h-3 rounded-full" 
+                                        style={{ backgroundColor: entry.color }}
+                                      />
+                                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                                        {entry.name}:
+                                      </span>
+                                    </div>
+                                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                                      {formatCurrency(Number(entry.value) || 0)}
+                                    </span>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           )
@@ -375,16 +477,33 @@ export function Dashboard() {
                         return null
                       }}
                     />
-                    <Bar dataKey="income" fill="#22c55e" />
-                    <Bar dataKey="expenses" fill="#ef4444" />
+                    <Bar 
+                      dataKey="income" 
+                      fill="hsl(142, 76%, 36%)" 
+                      radius={[4, 4, 0, 0]}
+                      name="Income"
+                    />
+                    <Bar 
+                      dataKey="expenses" 
+                      fill="hsl(346, 87%, 43%)" 
+                      radius={[4, 4, 0, 0]}
+                      name="Expenses"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             ) : (
               <div className="flex items-center justify-center h-[300px] text-gray-500">
                 <div className="text-center">
-                  <p>No transaction history available</p>
-                  <p className="text-sm">Add some transactions to see trends</p>
+                  <div className="w-16 h-16 border-4 border-gray-200 dark:border-gray-700 rounded mx-auto mb-4 flex items-center justify-center">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                      <div className="w-2 h-6 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                      <div className="w-2 h-10 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium">No transaction history</p>
+                  <p className="text-sm">Add some transactions to see monthly trends</p>
                 </div>
               </div>
             )}
@@ -403,23 +522,26 @@ export function Dashboard() {
           <CardContent>
             <div className="space-y-4">
               {recentTransactions.length > 0 ? (
-                recentTransactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${transaction.type === 'income' ? "bg-green-500" : "bg-red-500"}`} />
-                      <div>
-                        <p className="font-medium">{transaction.description}</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{transaction.category}</p>
+                recentTransactions.map((transaction) => {
+                  const category = categories.find(c => c.id === transaction.category_id)
+                  return (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-2 h-2 rounded-full ${transaction.type === 'income' ? "bg-green-500" : "bg-red-500"}`} />
+                        <div>
+                          <p className="font-medium">{transaction.description}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{category?.name || 'Uncategorized'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-medium ${transaction.type === 'income' ? "text-green-600" : "text-red-600"}`}>
+                          {transaction.type === 'income' ? "+" : ""}{formatCurrency(Math.abs(transaction.amount))}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(new Date(transaction.date))}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-medium ${transaction.type === 'income' ? "text-green-600" : "text-red-600"}`}>
-                        {transaction.type === 'income' ? "+" : ""}{formatCurrency(Math.abs(transaction.amount))}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(new Date(transaction.date))}</p>
-                    </div>
-                  </div>
-                ))
+                  )
+                })
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <p>No recent transactions</p>
