@@ -27,18 +27,18 @@ import { createClient } from "@/lib/supabase/client"
 const supabase = createClient()
 
 const colorOptions = [
-  "#8884d8",
-  "#82ca9d",
-  "#ffc658",
-  "#ff7300",
-  "#00ff00",
-  "#22c55e",
-  "#ef4444",
-  "#f97316",
-  "#eab308",
-  "#84cc16",
-  "#06b6d4",
-  "#8b5cf6",
+  { value: "#8884d8", name: "Purple" },
+  { value: "#82ca9d", name: "Mint Green" },
+  { value: "#ffc658", name: "Golden Yellow" },
+  { value: "#ff7300", name: "Orange" },
+  { value: "#00ff00", name: "Bright Green" },
+  { value: "#22c55e", name: "Emerald" },
+  { value: "#ef4444", name: "Red" },
+  { value: "#f97316", name: "Orange Red" },
+  { value: "#eab308", name: "Yellow" },
+  { value: "#84cc16", name: "Lime" },
+  { value: "#06b6d4", name: "Cyan" },
+  { value: "#8b5cf6", name: "Violet" },
 ]
 
 export function Categories() {
@@ -341,10 +341,10 @@ export function Categories() {
                     </SelectTrigger>
                     <SelectContent>
                       {colorOptions.map((color) => (
-                        <SelectItem key={color} value={color}>
+                        <SelectItem key={color.value} value={color.value}>
                           <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 rounded" style={{ backgroundColor: color }} />
-                            <span>{color}</span>
+                            <div className="w-4 h-4 rounded" style={{ backgroundColor: color.value }} />
+                            <span>{color.name}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -415,10 +415,10 @@ export function Categories() {
                     </SelectTrigger>
                     <SelectContent>
                       {colorOptions.map((color) => (
-                        <SelectItem key={color} value={color}>
+                        <SelectItem key={color.value} value={color.value}>
                           <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 rounded" style={{ backgroundColor: color }} />
-                            <span>{color}</span>
+                            <div className="w-4 h-4 rounded" style={{ backgroundColor: color.value }} />
+                            <span>{color.name}</span>
                           </div>
                         </SelectItem>
                       ))}
