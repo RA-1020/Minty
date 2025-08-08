@@ -8,7 +8,7 @@ import { NotificationsListener } from '@/components/notifications-listener';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Your App Name",
+  title: "Minty",
   description: "Your app description",
 };
 

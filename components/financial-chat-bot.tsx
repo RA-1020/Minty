@@ -155,7 +155,7 @@ export default function FinancialChatBot() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-white dark:bg-gray-900 min-h-screen">
+    <div className="p-6 max-w-4xl mx-auto bg-white dark:bg-slate-800 min-h-screen">
       <div className="space-y-2 mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
           <Sparkles className="h-8 w-8 text-blue-600" />
@@ -177,8 +177,8 @@ export default function FinancialChatBot() {
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col p-0 bg-white dark:bg-gray-800">
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 bg-gray-50 dark:bg-gray-900">
+        <CardContent className="flex-1 flex flex-col p-0 bg-white dark:bg-slate-700">
+          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4 bg-gray-50 dark:bg-slate-800">
             <div className="space-y-4">
               {messages.length === 0 && (
                 <div className="text-center py-8">

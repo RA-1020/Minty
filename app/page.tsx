@@ -68,7 +68,7 @@ function AppContent() {
   // Show Supabase test if requested
   if (showSupabaseTest) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold mb-2">Supabase Connection Test</h1>
@@ -88,7 +88,7 @@ function AppContent() {
   // Show setup guide if requested
   if (showSetupGuide) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900 p-6">
         <div className="mb-4">
           <Button variant="outline" onClick={() => toggleSetupGuide(false)}>
             Back to App
@@ -101,7 +101,7 @@ function AppContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900">
         <div className="absolute top-4 right-4 space-x-2">
           <Button variant="outline" onClick={() => toggleSetupGuide(true)}>
             Setup Guide
@@ -135,7 +135,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-slate-900">
       <Sidebar currentPage={currentPage} setCurrentPage={handlePageChange} />
       <main className="flex-1 overflow-auto">
         <ErrorBoundary>

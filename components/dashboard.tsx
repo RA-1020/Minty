@@ -295,7 +295,7 @@ export function Dashboard() {
                         }}
                       />
                       {/* Center hole for donut effect */}
-                      <div className="absolute inset-8 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center will-change-transform"
+                      <div className="absolute inset-8 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center will-change-transform"
                            style={{ animation: 'centerAppear 0.6s ease-out 0.8s forwards', opacity: 0 }}>
                         <div className="text-center">
                           <p className="text-lg font-bold text-gray-900 dark:text-white"

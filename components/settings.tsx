@@ -675,7 +675,7 @@ export default function Settings() {
                   </AvatarFallback>
                 </Avatar>
                 {uploadingImage && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                  <div className="absolute inset-0 bg-slate-800 bg-opacity-50 rounded-full flex items-center justify-center">
                     <Loader2 className="h-6 w-6 text-white animate-spin" />
                   </div>
                 )}
