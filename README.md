@@ -11,11 +11,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Recharts](https://img.shields.io/badge/Recharts-Data_Viz-FF6B6B?style=for-the-badge&logo=chart.js&logoColor=white)](https://recharts.org/)
-
-[🚀 Live Demo](#) • [📖 Documentation](#features) • [🐛 Report Bug](#contributing) • [💡 Request Feature](#contributing)
-
----
 
 ### 🎯 **Track • Analyze • Optimize Your Finances**
 
@@ -31,17 +26,17 @@
 
 ### 📊 **Smart Dashboard**
 - **Real-time financial overview** with key metrics
-- **Interactive pie charts** with hover tooltips
+- **Interactive pie charts** with hover tooltips and smooth animations
 - **Monthly trend analysis** with bar charts
 - **Budget alerts** and spending notifications
 - **Recent transactions** at a glance
 
 ### 💳 **Transaction Management**
 - **Easy transaction entry** with smart categorization
-- **Bulk import/export** capabilities
-- **Advanced filtering** and search
-- **Receipt attachment** support
-- **Recurring transaction** automation
+- **Advanced filtering** and search capabilities
+- **Bulk import/export** functionality
+- **Date range selection** for detailed analysis
+- **Category-based organization**
 
 </td>
 <td width="50%">
@@ -50,14 +45,15 @@
 - **Custom budget creation** with spending limits
 - **Category-based budgeting** with visual progress
 - **Smart alerts** when approaching limits
-- **Goal tracking** for savings targets
+- **Real-time budget tracking**
 - **Performance analytics** and insights
 
 ### 🎨 **Beautiful UI/UX**
 - **Smooth animations** and micro-interactions
+- **Animated pie charts** with hover effects
 - **Dark/Light mode** support
 - **Responsive design** for all devices
-- **Custom color themes** for categories
+- **Custom color themes** with friendly names
 - **Accessibility-first** design principles
 
 </td>
@@ -70,15 +66,15 @@
 
 ### 📱 Dashboard Overview
 ![Dashboard](public/placeholder.jpg)
-*Beautiful, animated dashboard with real-time insights*
+*Beautiful, animated dashboard with real-time insights and interactive pie charts*
 
 ### 💰 Transaction Management
 ![Transactions](public/placeholder.jpg)
-*Intuitive transaction entry and management*
+*Intuitive transaction entry and management with smart categorization*
 
-### 📊 Analytics & Reports
+### 📊 Budget Tracking
 ![Analytics](public/placeholder.jpg)
-*Comprehensive financial analytics and reporting*
+*Comprehensive budget tracking with visual progress indicators*
 
 </div>
 
@@ -91,7 +87,7 @@
 | **Frontend** | Next.js 15, React 18, TypeScript |
 | **Styling** | Tailwind CSS, shadcn/ui, Lucide Icons |
 | **Database** | Supabase (PostgreSQL) |
-| **Charts** | Recharts, Custom CSS Animations |
+| **Charts** | Custom CSS Animations, Recharts |
 | **AI/ML** | Groq API (Financial Insights) |
 | **Authentication** | Supabase Auth |
 | **Deployment** | Vercel |
@@ -103,9 +99,9 @@
 ### Prerequisites
 
 ```bash
-# Node.js 18+ required
-node --version  # Should be 18.0.0 or higher
-npm --version   # Should be 9.0.0 or higher
+# Node.js 15+ required
+node --version  # Should be 15.0.0 or higher
+npm --version   # Should be 7.0.0 or higher
 ```
 
 ### Installation
@@ -122,10 +118,7 @@ npm install
 cp .env.example .env.local
 # Edit .env.local with your Supabase and Groq API keys
 
-# 4. Run database migrations
-npm run db:migrate
-
-# 5. Start the development server
+# 4. Start the development server
 npm run dev
 ```
 
@@ -146,73 +139,31 @@ GROQ_API_KEY=your_groq_api_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-## 📂 Project Structure
+## 🎨 Key Features Highlights
 
-```
-Minty/
-├── 📁 app/                    # Next.js 15 App Router
-│   ├── 📁 api/               # API routes
-│   │   └── 📁 chat/          # AI financial assistant
-│   ├── 📄 globals.css        # Global styles
-│   ├── 📄 layout.tsx         # Root layout
-│   └── 📄 page.tsx           # Home page
-├── 📁 components/            # React components
-│   ├── 📄 dashboard.tsx      # Main dashboard
-│   ├── 📄 transactions.tsx   # Transaction management
-│   ├── 📄 budgets.tsx        # Budget management
-│   ├── 📄 categories.tsx     # Category management
-│   └── 📁 ui/                # shadcn/ui components
-├── 📁 lib/                   # Utilities and hooks
-│   ├── 📁 hooks/             # Custom React hooks
-│   ├── 📁 services/          # Business logic
-│   └── 📁 supabase/          # Database client
-├── 📁 scripts/               # Database scripts
-└── 📁 public/                # Static assets
-```
+### 💰 **Complete Financial Management**
+- **Transaction tracking** with automatic categorization and smart insights
+- **Budget management** with real-time spending alerts and progress monitoring
+- **Financial analytics** with trend analysis and spending pattern recognition
+- **Multi-category organization** for comprehensive expense tracking
 
-## 🎨 Key Components
+### 🤖 **AI-Powered Insights**
+- **Intelligent transaction categorization** using machine learning
+- **Spending pattern analysis** with personalized recommendations
+- **Budget optimization** suggestions based on your financial behavior
+- **Predictive analytics** for better financial planning
 
-### 🌟 **Dashboard Component**
-```tsx
-// Animated pie chart with smooth transitions
-<PieChart data={categoryData}>
-  <Pie dataKey="value" cx="50%" cy="50%" outerRadius={80}>
-    {/* Custom animations and hover effects */}
-  </Pie>
-</PieChart>
-```
+### 📊 **Advanced Analytics Dashboard**
+- **Real-time financial overview** with key performance indicators
+- **Interactive data visualization** for deeper insights
+- **Monthly and yearly trend analysis** with comparative reporting
+- **Customizable reporting** for different time periods and categories
 
-### 💡 **Smart Features**
-- **Real-time data synchronization** with Supabase
-- **Custom CSS animations** for smooth user experience
-- **Intelligent categorization** with AI assistance
-- **Responsive design** that works on all devices
-
-## 🎯 Usage Examples
-
-### Adding a Transaction
-```bash
-# Navigate to Transactions
-# Click "Add Transaction"
-# Fill in details with smart category suggestions
-# Save and watch real-time dashboard updates
-```
-
-### Creating Budgets
-```bash
-# Go to Budgets section
-# Set spending limits by category
-# Enable smart alerts
-# Track progress with visual indicators
-```
-
-### Viewing Analytics
-```bash
-# Check Dashboard for overview
-# Hover over pie chart sections for details
-# Analyze monthly trends
-# Review budget performance
-```
+### 🔔 **Smart Notifications System**
+- **Budget alerts** when approaching spending limits (80% threshold)
+- **Spending reminders** for consistent transaction logging
+- **Weekly financial reports** with trend analysis and insights
+- **Customizable notification preferences** with browser push support
 
 ## 🔧 Development
 
@@ -225,66 +176,7 @@ npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
 npm run type-check   # TypeScript type checking
-
-# Database
-npm run db:migrate   # Run database migrations
-npm run db:seed      # Seed sample data
-npm run db:reset     # Reset database
 ```
-
-### Code Quality
-
-```bash
-# Linting and formatting
-npm run lint         # ESLint
-npm run lint:fix     # Auto-fix linting issues
-npm run format       # Prettier formatting
-npm run type-check   # TypeScript validation
-```
-
-## 🤝 Contributing
-
-We love contributions! Here's how to get started:
-
-### 🐛 **Bug Reports**
-1. Check existing [issues](https://github.com/RA-1020/Minty/issues)
-2. Create a new issue with detailed description
-3. Include screenshots and reproduction steps
-
-### 💡 **Feature Requests**
-1. Open a [feature request](https://github.com/RA-1020/Minty/issues/new?template=feature_request.md)
-2. Describe the feature and its benefits
-3. Include mockups or examples if possible
-
-### 🔧 **Development Workflow**
-```bash
-# 1. Fork the repository
-# 2. Create a feature branch
-git checkout -b feature/amazing-feature
-
-# 3. Make your changes
-# 4. Add tests if applicable
-# 5. Commit with conventional commits
-git commit -m "feat: add amazing feature"
-
-# 6. Push and create a Pull Request
-git push origin feature/amazing-feature
-```
-
-## 📊 Performance
-
-<div align="center">
-
-| Metric | Score | Status |
-|--------|-------|--------|
-| Performance | 95/100 | 🟢 Excellent |
-| Accessibility | 98/100 | 🟢 Excellent |
-| Best Practices | 100/100 | 🟢 Perfect |
-| SEO | 92/100 | 🟢 Excellent |
-
-*Lighthouse scores (Desktop)*
-
-</div>
 
 ## 🌟 Roadmap
 
@@ -306,33 +198,13 @@ git push origin feature/amazing-feature
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) team for the amazing framework
-- [Supabase](https://supabase.com/) for the backend infrastructure
-- [shadcn/ui](https://ui.shadcn.com/) for beautiful UI components
-- [Recharts](https://recharts.org/) for data visualization
-- [Lucide](https://lucide.dev/) for the icon system
-
-## 📞 Support
-
-<div align="center">
-
-**Need help? We're here for you!**
-
-[![GitHub Issues](https://img.shields.io/badge/GitHub-Issues-red?style=for-the-badge&logo=github)](https://github.com/RA-1020/Minty/issues)
-[![Discord](https://img.shields.io/badge/Discord-Community-7289DA?style=for-the-badge&logo=discord&logoColor=white)](#)
-[![Email](https://img.shields.io/badge/Email-Support-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:support@minty.app)
-
-</div>
-
 ---
 
 <div align="center">
 
 **⭐ If you found Minty helpful, please give it a star! ⭐**
 
-Made with ❤️ by [RA-1020](https://github.com/RA-1020)
+Made with ❤️ by [RA-1020](https://github.com/RA-1020) & [sohjpeg](https://github.com/sohjpeg)
 
 [🔝 Back to Top](#-minty---personal-finance-dashboard)
 
