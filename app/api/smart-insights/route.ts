@@ -1,12 +1,31 @@
 import Groq from 'groq-sdk'
 import { NextRequest, NextResponse } from 'next/server'
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!
-})
-
 export async function POST(request: NextRequest) {
   try {
+    // Debug API key
+    console.log('GROQ API Key exists:', !!process.env.GROQ_API_KEY)
+    console.log('GROQ API Key first 10 chars:', process.env.GROQ_API_KEY?.substring(0, 10))
+    
+    // Check if GROQ API key is configured
+    if (!process.env.GROQ_API_KEY) {
+      console.error('GROQ_API_KEY environment variable is not set')
+      return NextResponse.json({
+        insights: [{
+          type: 'tip',
+          icon: '🔧',
+          title: 'AI Service Configuration Required',
+          description: 'AI insights require API key configuration',
+          actionTip: 'Configure GROQ_API_KEY in environment variables',
+          trend: 'info',
+          interactive: false,
+          category: null
+        }],
+        success: true,
+        modelUsed: "configuration-error"
+      })
+    }
+
     const { financialData, userId } = await request.json()
 
     if (!financialData) {
@@ -19,11 +38,18 @@ export async function POST(request: NextRequest) {
     // Create context from financial data
     const context = createFinancialContext(financialData)
     
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: `You are Minty AI, an advanced financial analyst that provides smart spending insights based on real user data.
+    // Create Groq client with current API key
+    const groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY!
+    })
+    
+    let completion
+    try {
+      completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: `You are Minty AI, an advanced financial analyst that provides smart spending insights based on real user data.
 
 FINANCIAL DATA CONTEXT:
 ${context}
@@ -61,16 +87,53 @@ GUIDELINES:
 - Prioritize insights that can drive action
 
 Return ONLY the JSON array, no additional text or formatting.`
-        },
-        {
-          role: "user",
-          content: "Generate smart financial insights based on my data."
-        }
-      ],
-      model: "llama3-8b-8192",
-      max_tokens: 1500,
-      temperature: 0.3 // Lower temperature for more consistent JSON output
-    })
+          },
+          {
+            role: "user",
+            content: "Generate smart financial insights based on my data."
+          }
+        ],
+        model: "llama3-8b-8192",
+        max_tokens: 1500,
+        temperature: 0.3 // Lower temperature for more consistent JSON output
+      })
+    } catch (groqError: any) {
+      console.error('Groq API Error:', groqError)
+      
+      // Handle rate limit specifically
+      if (groqError.status === 429) {
+        return NextResponse.json({
+          insights: [{
+            type: 'tip',
+            icon: '⏳',
+            title: 'AI Rate Limit Reached',
+            description: 'AI service has reached its daily usage limit',
+            actionTip: 'AI insights will be available again tomorrow. All other features work perfectly!',
+            trend: 'info',
+            interactive: false,
+            category: null
+          }],
+          success: true,
+          modelUsed: "rate-limit-fallback"
+        })
+      }
+      
+      // Return fallback insights for other errors
+      return NextResponse.json({
+        insights: [{
+          type: 'tip',
+          icon: '🤖',
+          title: 'AI Service Temporarily Unavailable',
+          description: 'Unable to connect to AI service for personalized insights',
+          actionTip: 'The dashboard is fully functional. AI insights will return shortly.',
+          trend: 'info',
+          interactive: false,
+          category: null
+        }],
+        success: true,
+        modelUsed: "groq-error-fallback"
+      })
+    }
 
     const response = completion.choices[0].message.content
 

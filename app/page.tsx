@@ -110,14 +110,6 @@ function AppContent() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-950 dark:to-slate-900">
-        <div className="absolute top-4 right-4 space-x-2">
-          <Button variant="outline" onClick={() => toggleSetupGuide(true)}>
-            Setup Guide
-          </Button>
-          <Button variant="outline" onClick={() => toggleSupabaseTest(true)}>
-            Test Connection
-          </Button>
-        </div>
         <AuthForm />
       </div>
     )

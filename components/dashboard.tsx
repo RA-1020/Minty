@@ -31,6 +31,9 @@ const generateAIInsights = async (allTransactions: any[], allCategories: any[], 
       }
     }
 
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
     const response = await fetch('/api/smart-insights', {
       method: 'POST',
       headers: {
@@ -38,8 +41,11 @@ const generateAIInsights = async (allTransactions: any[], allCategories: any[], 
       },
       body: JSON.stringify({ 
         financialData
-      })
+      }),
+      signal: controller.signal
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch AI insights: ${response.status}`)
@@ -50,14 +56,21 @@ const generateAIInsights = async (allTransactions: any[], allCategories: any[], 
   } catch (error) {
     console.error('Error generating AI insights:', error)
     
+    // Check if it's a timeout error
+    const isTimeout = error.name === 'AbortError'
+    
     // Fallback insights if API fails
     return [
       {
         type: 'tip',
-        icon: '🤖',
-        title: 'AI Insights Temporarily Unavailable',
-        description: 'Unable to connect to AI service for personalized insights',
-        actionTip: 'Check your internet connection and try refreshing the page',
+        icon: isTimeout ? '⏱️' : '🤖',
+        title: isTimeout ? 'AI Analysis Timeout' : 'AI Insights Temporarily Unavailable',
+        description: isTimeout ? 
+          'AI analysis is taking longer than expected' : 
+          'Unable to connect to AI service for personalized insights',
+        actionTip: isTimeout ? 
+          'Your dashboard is ready! AI insights will load when available' : 
+          'Check your internet connection and try refreshing the page',
         trend: 'info',
         interactive: false,
         category: null
@@ -150,6 +163,42 @@ export function Dashboard() {
 
     loadDashboardData()
   }, [user?.id])
+
+  // Load AI insights separately to avoid blocking the dashboard
+  useEffect(() => {
+    const loadAIInsights = async () => {
+      // Only load insights if we have data and user is authenticated
+      if (!user?.id || transactions.length === 0) return
+      
+      setInsightsLoading(true)
+      try {
+        console.log('Generating AI insights...')
+        const insights = await generateAIInsights(transactions, categories, budgets)
+        console.log('Generated insights:', insights)
+        setSmartInsights(insights)
+      } catch (error) {
+        console.error('Error generating insights:', error)
+        setSmartInsights([{
+          type: 'tip',
+          icon: '⚠️',
+          title: 'Unable to Load AI Insights',
+          description: 'There was an error generating personalized insights',
+          actionTip: 'Please refresh the page to try again',
+          trend: 'info',
+          interactive: false
+        }])
+      } finally {
+        setInsightsLoading(false)
+      }
+    }
+
+    // Delay AI loading by 2 seconds to let dashboard render first
+    const timeoutId = setTimeout(() => {
+      loadAIInsights()
+    }, 2000)
+
+    return () => clearTimeout(timeoutId)
+  }, [user?.id, transactions.length, categories.length, budgets.length])
 
   // Process data for dashboard displays
   const processTransactionData = async (allTransactions, allCategories, allBudgets) => {
@@ -257,28 +306,6 @@ export function Dashboard() {
     }
 
     setBudgetAlerts(budgetAlertsData)
-
-    // Generate AI-powered Smart Insights
-    setInsightsLoading(true)
-    try {
-      console.log('Generating AI insights...')
-      const insights = await generateAIInsights(allTransactions, allCategories, allBudgets)
-      console.log('Generated insights:', insights)
-      setSmartInsights(insights)
-    } catch (error) {
-      console.error('Error generating insights:', error)
-      setSmartInsights([{
-        type: 'tip',
-        icon: '⚠️',
-        title: 'Unable to Load AI Insights',
-        description: 'There was an error generating personalized insights',
-        actionTip: 'Please refresh the page to try again',
-        trend: 'info',
-        interactive: false
-      }])
-    } finally {
-      setInsightsLoading(false)
-    }
   } catch (error) {
     console.error('Error processing transaction data:', error)
     setInsightsLoading(false)
@@ -538,11 +565,12 @@ export function Dashboard() {
             {insightsLoading ? (
               <div className="flex items-center justify-center h-[200px]">
                 <div className="text-center space-y-3">
-                  <div className="relative">
+                  <div className="relative mx-auto w-8 h-8">
                     <div className="w-8 h-8 border-2 border-gray-200 dark:border-gray-700 rounded-full"></div>
                     <div className="absolute inset-0 w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Analyzing patterns...</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">🧠 AI analyzing your financial patterns...</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">This may take a few seconds</p>
                 </div>
               </div>
             ) : smartInsights.length > 0 ? (

@@ -1,12 +1,17 @@
 import Groq from 'groq-sdk'
 import { NextRequest, NextResponse } from 'next/server'
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY!
-})
-
 export async function POST(request: NextRequest) {
   try {
+    // Check if GROQ API key is configured
+    if (!process.env.GROQ_API_KEY) {
+      console.error('GROQ_API_KEY environment variable is not set')
+      return NextResponse.json({
+        response: "I'm sorry, but I need to be configured with an API key to provide AI assistance. Please check your environment configuration.",
+        error: "API key not configured"
+      }, { status: 200 }) // Return 200 so the UI can show the message
+    }
+
     const { message, financialData, userId } = await request.json()
 
     if (!message || !financialData) {
@@ -19,11 +24,18 @@ export async function POST(request: NextRequest) {
     // Create context from financial data
     const context = createFinancialContext(financialData)
     
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: `You are a personal financial assistant named "Minty AI" analyzing this user's financial data from their Minty app. 
+    // Create Groq client with current API key
+    const groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY!
+    })
+    
+    let completion
+    try {
+      completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: `You are a personal financial assistant named "Minty AI" analyzing this user's financial data from their Minty app. 
 Provide helpful, accurate insights based ONLY on the data provided below.
 
 FINANCIAL DATA CONTEXT:
@@ -46,16 +58,45 @@ Example response format:
 Here's what I recommend... 💡
 
 Is there anything else about your finances you'd like me to analyze? 🤔"`
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ],
-      model: "llama3-8b-8192", // Fast and free Groq model
-      max_tokens: 500,
-      temperature: 0.7
-    })
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        model: "llama3-8b-8192", // Fast and free Groq model
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    } catch (groqError: any) {
+      console.error('Groq API Error in chat:', groqError)
+      
+      // Handle rate limit specifically
+      if (groqError.status === 429) {
+        return NextResponse.json({
+          response: `I've reached my daily usage limit for today! 😅 
+
+But don't worry - your Minty dashboard is working perfectly! You can still:
+• View all transactions and budgets 💰
+• Add new expenses and income 📊
+• Track your spending patterns 📈
+• Use all financial features 🎯
+
+I'll be back tomorrow with fresh AI insights! Is there anything specific about your dashboard you'd like help with? 🤔`,
+          error: "Rate limit reached"
+        })
+      }
+      
+      // Return a friendly error message for other errors
+      return NextResponse.json({
+        response: `I'm sorry, but I'm having trouble connecting to my AI service right now. 🤖 
+
+Your Minty dashboard is working perfectly though! You can still view all your transactions, budgets, and financial data.
+
+Please try asking me again in a few moments, or refresh the page. Is there anything else I can help you with? 💭`,
+        error: "AI service temporarily unavailable"
+      })
+    }
 
     const response = completion.choices[0].message.content
 
