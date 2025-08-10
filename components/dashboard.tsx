@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { useFormatting } from "@/lib/hooks/use-formatting"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
-import { TrendingUp, TrendingDown, Wallet, Target, AlertTriangle } from "lucide-react"
+import { TrendingUp, TrendingDown, Wallet, Target, AlertTriangle, Brain, Lightbulb } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useAuth } from "@/lib/auth-context"
@@ -13,17 +13,71 @@ import { createClient } from "@/lib/supabase/client"
 
 const supabase = createClient()
 
+// Smart Insights Generator Function - AI Powered
+const generateAIInsights = async (allTransactions: any[], allCategories: any[], allBudgets: any[]) => {
+  try {
+    const financialData = {
+      transactions: allTransactions,
+      categories: allCategories,
+      budgets: allBudgets,
+      summary: {
+        totalIncome: allTransactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + Math.abs(Number(t.amount) || 0), 0),
+        totalExpenses: allTransactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + Math.abs(Number(t.amount) || 0), 0),
+        transactionCount: allTransactions.length
+      }
+    }
+
+    const response = await fetch('/api/smart-insights', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        financialData
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch AI insights: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.insights || []
+  } catch (error) {
+    console.error('Error generating AI insights:', error)
+    
+    // Fallback insights if API fails
+    return [
+      {
+        type: 'tip',
+        icon: '🤖',
+        title: 'AI Insights Temporarily Unavailable',
+        description: 'Unable to connect to AI service for personalized insights',
+        actionTip: 'Check your internet connection and try refreshing the page',
+        trend: 'info',
+        interactive: false,
+        category: null
+      }
+    ]
+  }
+}
+
 export function Dashboard() {
   const [transactions, setTransactions] = useState([])
   const [budgets, setBudgets] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [categoryData, setCategoryData] = useState([])
-  const { formatCurrency, formatDate, getWeekStart } = useFormatting()
-  const [monthlyData, setMonthlyData] = useState([])
   const [recentTransactions, setRecentTransactions] = useState([])
   const [budgetAlerts, setBudgetAlerts] = useState([])
-
+  const [smartInsights, setSmartInsights] = useState([])
+  const [insightsLoading, setInsightsLoading] = useState(false)
+  
+  const { formatCurrency, formatDate } = useFormatting()
   const { user } = useAuth()
 
   // Load all user data
@@ -65,10 +119,10 @@ export function Dashboard() {
         setCategories(allCategories)
 
         // Process data for charts and summaries
-        processTransactionData(allTransactions, allCategories, allBudgets)
+        await processTransactionData(allTransactions, allCategories, allBudgets)
         
       } catch (error) {
-        console.error('Error:', error)
+        console.error('Error loading dashboard data:', error)
       } finally {
         setLoading(false)
       }
@@ -78,16 +132,20 @@ export function Dashboard() {
   }, [user?.id])
 
   // Process data for dashboard displays
-  const processTransactionData = (allTransactions, allCategories, allBudgets) => {
+  const processTransactionData = async (allTransactions, allCategories, allBudgets) => {
     console.log('=== DEBUGGING DASHBOARD DATA ===')
     console.log('Total transactions loaded:', allTransactions.length)
     console.log('Total categories loaded:', allCategories.length)
+    console.log('Total budgets loaded:', allBudgets.length)
     
     // Recent transactions (last 5)
     setRecentTransactions(allTransactions.slice(0, 5))
 
-    // Use real data from your database
-    const currentMonth = '2025-08'
+    // Current month data - determine current month dynamically
+    const currentDate = new Date()
+    const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
+    console.log('Using current month:', currentMonth)
+    
     const categorySpending = {}
     const currentMonthExpenses = allTransactions.filter(t => 
       t.type === 'expense' && 
@@ -129,71 +187,76 @@ export function Dashboard() {
     console.log('Final category chart data:', realCategoryChartData)
     setCategoryData(realCategoryChartData)
 
-    // Monthly trends (last 6 months)
-    const monthlyTrends = {}
-    const sixMonthsAgo = new Date()
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-
-    allTransactions.forEach(transaction => {
-      const date = new Date(transaction.date)
-      if (date >= sixMonthsAgo) {
-        const monthKey = date.toISOString().slice(0, 7) // YYYY-MM format
-        if (!monthlyTrends[monthKey]) {
-          monthlyTrends[monthKey] = { income: 0, expenses: 0 }
-        }
-        
-        if (transaction.type === 'income') {
-          monthlyTrends[monthKey].income += transaction.amount
-        } else {
-          monthlyTrends[monthKey].expenses += Math.abs(transaction.amount)
-        }
-      }
-    })
-
-    const monthlyChartData = Object.entries(monthlyTrends)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-6) // Last 6 months
-      .map(([month, data]) => ({
-        month: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short' }),
-        income: (data as any).income,
-        expenses: (data as any).expenses,
-        savings: (data as any).income - (data as any).expenses
-      }))
-
-    setMonthlyData(monthlyChartData)
-
-    // Budget alerts
-    const alerts = allBudgets.map(budget => {
-      const spent = budget.spent_amount || 0
+    // Budget alerts - calculate spent amounts for current month
+    const budgetAlertsData = []
+    for (const budget of allBudgets) {
+      // Calculate spent amount for this budget's category in current month
+      const budgetCategory = allCategories.find(c => c.id === budget.category_id)
+      const spent = currentMonthExpenses
+        .filter(t => t.category_id === budget.category_id)
+        .reduce((sum, t) => sum + Math.abs(Number(t.amount) || 0), 0)
+      
       const limit = budget.total_amount || 0
       const percentage = limit > 0 ? (spent / limit) * 100 : 0
       
-      return {
-        category: budget.name,
-        spent,
-        limit,
-        percentage
+      if (percentage > 75) { // Only show budgets over 75%
+        budgetAlertsData.push({
+          category: budgetCategory?.name || budget.name,
+          spent,
+          limit,
+          percentage
+        })
       }
-    }).filter(alert => alert.percentage > 75) // Only show budgets over 75%
+    }
 
-    setBudgetAlerts(alerts)
+    setBudgetAlerts(budgetAlertsData)
+
+    // Generate AI-powered Smart Insights
+    setInsightsLoading(true)
+    try {
+      console.log('Generating AI insights...')
+      const insights = await generateAIInsights(allTransactions, allCategories, allBudgets)
+      console.log('Generated insights:', insights)
+      setSmartInsights(insights)
+    } catch (error) {
+      console.error('Error generating insights:', error)
+      setSmartInsights([{
+        type: 'tip',
+        icon: '⚠️',
+        title: 'Unable to Load AI Insights',
+        description: 'There was an error generating personalized insights',
+        actionTip: 'Please refresh the page to try again',
+        trend: 'info',
+        interactive: false
+      }])
+    } finally {
+      setInsightsLoading(false)
+    }
   }
 
-  // Calculate totals
-  const currentMonth = '2025-08' // Your data is in August 2025
-  const currentMonthTransactions = transactions.filter(t => 
-    t.date && t.date.startsWith(currentMonth)
-  )
-  
-  const totalIncome = currentMonthTransactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0)
+  // Calculate totals for current month
+  const getCurrentMonthData = () => {
+    const currentDate = new Date()
+    const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`
     
-  const totalExpenses = currentMonthTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0)
+    const currentMonthTransactions = transactions.filter(t => 
+      t.date && t.date.startsWith(currentMonth)
+    )
     
-  const totalSavings = totalIncome - totalExpenses
+    const totalIncome = currentMonthTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + Math.abs(Number(t.amount) || 0), 0)
+      
+    const totalExpenses = currentMonthTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + Math.abs(Number(t.amount) || 0), 0)
+      
+    const totalSavings = totalIncome - totalExpenses
+
+    return { totalIncome, totalExpenses, totalSavings }
+  }
+
+  const { totalIncome, totalExpenses, totalSavings } = getCurrentMonthData()
 
   if (loading) {
     return (
@@ -276,7 +339,7 @@ export function Dashboard() {
             <CardDescription>Your expenses breakdown for this month</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
+            <div className="h-[400px] w-full">
               {categoryData && categoryData.length > 0 ? (
                 <div className="w-full h-full flex flex-col">
                   {/* Custom Pie Chart using CSS Conic Gradient */}
@@ -407,106 +470,191 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Monthly Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Trends</CardTitle>
-            <CardDescription>Income vs Expenses over the last 6 months</CardDescription>
+        {/* Smart Spending Insights - Compact & Scrollable */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                <Brain className="h-3.5 w-3.5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold">Smart Insights</CardTitle>
+                <CardDescription className="text-sm text-gray-500">AI-powered recommendations</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            {monthlyData.length > 0 ? (
-              <ChartContainer
-                config={{
-                  income: {
-                    label: "Income",
-                    color: "hsl(142, 76%, 36%)",
-                  },
-                  expenses: {
-                    label: "Expenses", 
-                    color: "hsl(346, 87%, 43%)",
-                  },
-                  savings: {
-                    label: "Net Savings",
-                    color: "hsl(217, 91%, 60%)",
-                  },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis 
-                      dataKey="month" 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => formatCurrency(value)}
-                    />
-                    <ChartTooltip 
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length > 0) {
-                          return (
-                            <div className="bg-white dark:bg-gray-800 p-4 border rounded-lg shadow-lg">
-                              <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">{label}</p>
-                              <div className="space-y-1">
-                                {payload.map((entry, index) => (
-                                  <div key={index} className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-2">
-                                      <div 
-                                        className="w-3 h-3 rounded-full" 
-                                        style={{ backgroundColor: entry.color }}
-                                      />
-                                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                                        {entry.name}:
-                                      </span>
-                                    </div>
-                                    <span className="font-medium text-gray-900 dark:text-gray-100">
-                                      {formatCurrency(Number(entry.value) || 0)}
-                                    </span>
-                                  </div>
-                                ))}
+          <CardContent className="pt-0">
+            {insightsLoading ? (
+              <div className="flex items-center justify-center h-[200px]">
+                <div className="text-center space-y-3">
+                  <div className="relative">
+                    <div className="w-8 h-8 border-2 border-gray-200 dark:border-gray-700 rounded-full"></div>
+                    <div className="absolute inset-0 w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Analyzing patterns...</p>
+                </div>
+              </div>
+            ) : smartInsights.length > 0 ? (
+              <div className="h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pr-2">
+                <div className="space-y-3">
+                  {smartInsights.map((insight, index) => (
+                    <div 
+                      key={index}
+                      className="group p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition-all duration-200 cursor-pointer hover:shadow-sm"
+                      style={{ 
+                        animationDelay: `${index * 50}ms`,
+                        opacity: 0,
+                        animation: 'fadeInUp 0.4s ease-out forwards'
+                      }}
+                      onClick={() => {
+                        if (insight.interactive) {
+                          console.log('Clicked insight:', insight)
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Compact Icon */}
+                        <div className={`p-1.5 rounded-md flex-shrink-0 ${
+                          insight.type === 'warning' ? 'bg-amber-100 dark:bg-amber-900/20' :
+                          insight.type === 'success' || insight.type === 'achievement' ? 'bg-emerald-100 dark:bg-emerald-900/20' :
+                          insight.type === 'goal' ? 'bg-blue-100 dark:bg-blue-900/20' :
+                          insight.type === 'prediction' ? 'bg-purple-100 dark:bg-purple-900/20' :
+                          'bg-gray-100 dark:bg-gray-800'
+                        }`}>
+                          <span className="text-sm">{insight.icon}</span>
+                        </div>
+                        
+                        {/* Compact Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="font-medium text-base text-gray-900 dark:text-gray-100 leading-tight line-clamp-1">
+                              {insight.title}
+                            </h4>
+                            {insight.trend === 'warning' && <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
+                            {insight.trend === 'success' && <Target className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />}
+                          </div>
+                          
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 leading-relaxed line-clamp-2">
+                            {insight.description}
+                          </p>
+                          
+                          {/* Compact Progress bar */}
+                          {insight.type === 'goal' && insight.progress && (
+                            <div className="mb-2">
+                              <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
+                                <span className="text-sm">Progress</span>
+                                <span className="text-sm">{insight.progress.toFixed(0)}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                <div 
+                                  className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500"
+                                  style={{ width: `${Math.min(insight.progress, 100)}%` }}
+                                />
                               </div>
                             </div>
-                          )
-                        }
-                        return null
-                      }}
-                    />
-                    <Bar 
-                      dataKey="income" 
-                      fill="hsl(142, 76%, 36%)" 
-                      radius={[4, 4, 0, 0]}
-                      name="Income"
-                    />
-                    <Bar 
-                      dataKey="expenses" 
-                      fill="hsl(346, 87%, 43%)" 
-                      radius={[4, 4, 0, 0]}
-                      name="Expenses"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[300px] text-gray-500">
-                <div className="text-center">
-                  <div className="w-16 h-16 border-4 border-gray-200 dark:border-gray-700 rounded mx-auto mb-4 flex items-center justify-center">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                      <div className="w-2 h-6 bg-gray-300 dark:bg-gray-600 rounded"></div>
-                      <div className="w-2 h-10 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                          )}
+                          
+                          {/* Compact Action tip */}
+                          {insight.actionTip && (
+                            <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-md">
+                              <div className="flex items-start gap-1.5">
+                                <Lightbulb className="h-2.5 w-2.5 mt-0.5 text-gray-500 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-2">
+                                  {insight.actionTip}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Compact badges */}
+                          <div className="flex items-center gap-1.5 mt-2">
+                            {insight.type === 'achievement' && (
+                              <div className="px-1.5 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full">
+                                <span className="text-sm font-medium text-white">Achievement</span>
+                              </div>
+                            )}
+                            {insight.challenge && (
+                              <div className="px-1.5 py-0.5 border border-orange-200 dark:border-orange-800 rounded-full">
+                                <span className="text-sm text-orange-600 dark:text-orange-400">Challenge</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                  ))}
+                </div>
+                
+                {/* Compact footer for more insights */}
+                {smartInsights.length > 4 && (
+                  <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <button className="w-full py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                      View {smartInsights.length - 4} more insights →
+                    </button>
                   </div>
-                  <p className="text-lg font-medium">No transaction history</p>
-                  <p className="text-sm">Add some transactions to see monthly trends</p>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[200px]">
+                <div className="text-center max-w-xs">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl flex items-center justify-center">
+                    <Brain className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <h4 className="font-medium text-base text-gray-900 dark:text-gray-100 mb-1">Ready to analyze</h4>
+                  <p className="text-sm text-gray-500 mb-3">Add transactions to unlock insights</p>
+                  <div className="flex justify-center space-x-1">
+                    <div className="w-1 h-1 bg-blue-400 rounded-full animate-bounce"></div>
+                    <div className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
                 </div>
               </div>
             )}
+            
+            {/* Custom animations */}
+            <style jsx>{`
+              @keyframes fadeInUp {
+                from {
+                  opacity: 0;
+                  transform: translateY(10px);
+                }
+                to {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+              
+              .line-clamp-1 {
+                display: -webkit-box;
+                -webkit-line-clamp: 1;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+              }
+              
+              .line-clamp-2 {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+              }
+              
+              .scrollbar-thin {
+                scrollbar-width: thin;
+              }
+              
+              .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+                background-color: rgb(209 213 219);
+                border-radius: 9999px;
+              }
+              
+              .scrollbar-track-transparent::-webkit-scrollbar-track {
+                background-color: transparent;
+              }
+              
+              .scrollbar-thin::-webkit-scrollbar {
+                width: 4px;
+              }
+            `}</style>
           </CardContent>
         </Card>
       </div>
