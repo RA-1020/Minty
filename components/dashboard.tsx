@@ -87,14 +87,14 @@ export function Dashboard() {
 
       setLoading(true)
       try {
-        // Load transactions
+        // Load transactions - try basic query first, then enhance if needed
         const { data: transactionsData, error: transactionsError } = await supabase
           .from('transactions')
           .select('*')
           .eq('user_id', user.id)
           .order('date', { ascending: false })
 
-        // Load budgets
+        // Load budgets - try without category join first to avoid foreign key issues
         const { data: budgetsData, error: budgetsError } = await supabase
           .from('budgets')
           .select('*')
@@ -106,20 +106,40 @@ export function Dashboard() {
           .select('*')
           .eq('user_id', user.id)
 
-        if (transactionsError) console.error('Error loading transactions:', transactionsError)
-        if (budgetsError) console.error('Error loading budgets:', budgetsError)
-        if (categoriesError) console.error('Error loading categories:', categoriesError)
+        if (transactionsError) {
+          console.error('Error loading transactions:', transactionsError)
+          console.error('Transactions error details:', JSON.stringify(transactionsError, null, 2))
+        }
+        if (budgetsError) {
+          console.error('Error loading budgets:', budgetsError)
+          console.error('Budgets error details:', JSON.stringify(budgetsError, null, 2))
+        }
+        if (categoriesError) {
+          console.error('Error loading categories:', categoriesError)
+          console.error('Categories error details:', JSON.stringify(categoriesError, null, 2))
+        }
 
+        // Don't let one failed query stop the entire process
         const allTransactions = transactionsData || []
         const allBudgets = budgetsData || []
         const allCategories = categoriesData || []
+
+        console.log('Loaded data counts:', {
+          transactions: allTransactions.length,
+          budgets: allBudgets.length,
+          categories: allCategories.length
+        })
 
         setTransactions(allTransactions)
         setBudgets(allBudgets)
         setCategories(allCategories)
 
-        // Process data for charts and summaries
-        await processTransactionData(allTransactions, allCategories, allBudgets)
+        // Only process data if we have at least some data
+        if (allTransactions.length > 0 || allCategories.length > 0) {
+          await processTransactionData(allTransactions, allCategories, allBudgets)
+        } else {
+          console.log('No data to process - skipping processTransactionData')
+        }
         
       } catch (error) {
         console.error('Error loading dashboard data:', error)
@@ -133,10 +153,31 @@ export function Dashboard() {
 
   // Process data for dashboard displays
   const processTransactionData = async (allTransactions, allCategories, allBudgets) => {
-    console.log('=== DEBUGGING DASHBOARD DATA ===')
-    console.log('Total transactions loaded:', allTransactions.length)
-    console.log('Total categories loaded:', allCategories.length)
-    console.log('Total budgets loaded:', allBudgets.length)
+    try {
+      console.log('=== DEBUGGING DASHBOARD DATA ===')
+      console.log('Total transactions loaded:', allTransactions.length)
+      console.log('Total categories loaded:', allCategories.length)
+      console.log('Total budgets loaded:', allBudgets.length)
+    
+    // Debug category mapping
+    const debugCategoryMapping = () => {
+      console.log('Categories available:', allCategories.map(c => ({ id: c.id, name: c.name })))
+      
+      const uncategorized = allTransactions.filter(t => {
+        const hasCategory = allCategories.find(c => c.id === t.category_id)
+        return !hasCategory && t.type === 'expense'
+      })
+      
+      console.log('Uncategorized transactions:', uncategorized.length)
+      console.log('Sample uncategorized:', uncategorized.slice(0, 3).map(t => ({
+        id: t.id,
+        description: t.description,
+        category_id: t.category_id,
+        amount: t.amount
+      })))
+    }
+    
+    debugCategoryMapping()
     
     // Recent transactions (last 5)
     setRecentTransactions(allTransactions.slice(0, 5))
@@ -157,8 +198,18 @@ export function Dashboard() {
     console.log('Real current month expenses:', currentMonthExpenses.length)
     
     currentMonthExpenses.forEach(transaction => {
-      const category = allCategories.find(c => c.id === transaction.category_id)
-      const categoryName = category?.name || 'Other'
+      // First try to find category by ID
+      let category = allCategories.find(c => c.id === transaction.category_id)
+      
+      // If not found but transaction has nested category data, use that
+      if (!category && transaction.categories) {
+        category = transaction.categories
+      }
+      
+      const categoryName = category?.name || 'Uncategorized'
+      
+      console.log('Transaction:', transaction.description, 'Category ID:', transaction.category_id, 'Found Category:', category?.name || 'None')
+      
       const amount = Math.abs(Number(transaction.amount))
       
       if (amount > 0 && !isNaN(amount)) {
@@ -232,7 +283,11 @@ export function Dashboard() {
     } finally {
       setInsightsLoading(false)
     }
+  } catch (error) {
+    console.error('Error processing transaction data:', error)
+    setInsightsLoading(false)
   }
+}
 
   // Calculate totals for current month
   const getCurrentMonthData = () => {

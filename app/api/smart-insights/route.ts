@@ -142,8 +142,16 @@ function createFinancialContext(data: any) {
   const categorySpending = transactions
     .filter((t: any) => t.type === 'expense')
     .reduce((acc: any, t: any) => {
-      const category = t.category?.name || 'Uncategorized'
-      acc[category] = (acc[category] || 0) + Math.abs(t.amount)
+      // First try to find category by ID
+      let category = categories.find((c: any) => c.id === t.category_id)
+      
+      // If not found but transaction has nested category data, use that
+      if (!category && t.categories) {
+        category = t.categories
+      }
+      
+      const categoryName = category?.name || 'Uncategorized'
+      acc[categoryName] = (acc[categoryName] || 0) + Math.abs(t.amount)
       return acc
     }, {})
 
@@ -205,9 +213,16 @@ ${budgetUtilization.length > 0 ? budgetUtilization.map((b: any) =>
 ).join('\n') : 'No active budgets to analyze'}
 
 RECENT TRANSACTION PATTERNS:
-${recentTransactions.slice(0, 10).map((t: any) => 
-  `- ${t.date}: ${t.description} - ${t.type === 'income' ? '+' : '-'}$${Math.abs(t.amount).toFixed(2)} (${t.category?.name || 'Uncategorized'})`
-).join('\n')}
+${recentTransactions.slice(0, 10).map((t: any) => {
+  // Find category for this transaction
+  let category = categories.find((c: any) => c.id === t.category_id)
+  if (!category && t.categories) {
+    category = t.categories
+  }
+  const categoryName = category?.name || 'Uncategorized'
+  
+  return `- ${t.date}: ${t.description} - ${t.type === 'income' ? '+' : '-'}$${Math.abs(t.amount).toFixed(2)} (${categoryName})`
+}).join('\n')}
 
 FINANCIAL TRENDS:
 - Total Transaction Count: ${transactions.length}
