@@ -25,7 +25,7 @@ export function Sidebar({ currentPage, setCurrentPage }: SidebarProps) {
   ]
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-slate-800 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col h-full bg-slate-800 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700" data-tutorial="sidebar">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
@@ -65,6 +65,7 @@ export function Sidebar({ currentPage, setCurrentPage }: SidebarProps) {
                 setCurrentPage(item.id)
                 setIsMobileOpen(false)
               }}
+              data-tutorial={`${item.id}-link`}
             >
               {isActive && (
                 <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-600 dark:bg-blue-400 rounded-r-full" />

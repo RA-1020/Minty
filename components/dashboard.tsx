@@ -238,15 +238,11 @@ export function Dashboard() {
     console.log('Final category chart data:', realCategoryChartData)
     setCategoryData(realCategoryChartData)
 
-    // Budget alerts - calculate spent amounts for current month
+    // Budget alerts - use the spent amounts already calculated in budgets
     const budgetAlertsData = []
     for (const budget of allBudgets) {
-      // Calculate spent amount for this budget's category in current month
       const budgetCategory = allCategories.find(c => c.id === budget.category_id)
-      const spent = currentMonthExpenses
-        .filter(t => t.category_id === budget.category_id)
-        .reduce((sum, t) => sum + Math.abs(Number(t.amount) || 0), 0)
-      
+      const spent = Math.abs(budget.spent_amount || 0) // Use the spent amount from budget record
       const limit = budget.total_amount || 0
       const percentage = limit > 0 ? (spent / limit) * 100 : 0
       
@@ -335,7 +331,7 @@ export function Dashboard() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tutorial="metrics">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Income</CardTitle>
@@ -386,9 +382,9 @@ export function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-tutorial="charts">
         {/* Spending by Category */}
-        <Card>
+        <Card data-tutorial="spending-chart">
           <CardHeader>
             <CardTitle>Spending by Category</CardTitle>
             <CardDescription>Your expenses breakdown for this month</CardDescription>
@@ -526,7 +522,7 @@ export function Dashboard() {
         </Card>
 
         {/* Smart Spending Insights - Compact & Scrollable */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm" data-tutorial="smart-insights">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
@@ -717,7 +713,7 @@ export function Dashboard() {
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Transactions */}
-        <Card>
+        <Card data-tutorial="recent-transactions">
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
             <CardDescription>Your latest financial activity</CardDescription>
@@ -756,7 +752,7 @@ export function Dashboard() {
         </Card>
 
         {/* Budget Alerts */}
-        <Card>
+        <Card data-tutorial="budget-alerts">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <AlertTriangle className="h-5 w-5 text-orange-500" />

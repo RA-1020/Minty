@@ -14,8 +14,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTheme as useCustomTheme } from "@/components/theme-provider"
 import { useProfile } from "@/lib/hooks/use-profile"
 import { useAuth } from "@/lib/auth-context"
+import { useTutorial } from "@/lib/tutorial-context"
 import { createClient } from "@/lib/supabase/client"
-import { User, Bell, Globe, Download, Upload, Save, Moon, Sun, Loader2, Camera, CheckCircle } from "lucide-react"
+import { User, Bell, Globe, Download, Upload, Save, Moon, Sun, Loader2, Camera, CheckCircle, Play } from "lucide-react"
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { toast } from 'sonner'
@@ -48,6 +49,7 @@ export default function Settings() {
   }
   const { theme, setTheme } = useCustomTheme()
   const { user } = useAuth()
+  const { startTutorial } = useTutorial()
   const { profile, loading, updateProfile, updateNotificationPreferences } = useProfile()
   const [saving, setSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -757,6 +759,31 @@ export default function Settings() {
                 checked={theme === "dark"} 
                 onCheckedChange={handleThemeToggle}
               />
+            </div>
+
+            <Separator />
+
+            {/* Tutorial Section - Enhanced */}
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Play className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <h3 className="font-medium text-blue-900 dark:text-blue-100 text-sm">
+                    Take the Tutorial
+                  </h3>
+                </div>
+                <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                  Learn how to make the most of Minty with our interactive guided tour
+                </p>
+              </div>
+              <Button 
+                onClick={() => startTutorial('main')}
+                size="sm"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              >
+                <Play className="mr-1.5 h-3.5 w-3.5" />
+                Start
+              </Button>
             </div>
 
             <Separator />

@@ -491,7 +491,7 @@ export function Transactions() {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button data-tutorial="add-transaction">
               <Plus className="mr-2 h-4 w-4" />
               Add Transaction
             </Button>

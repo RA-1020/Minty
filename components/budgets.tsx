@@ -347,7 +347,7 @@ export function Budgets() {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button data-tutorial="create-budget">
               <Plus className="mr-2 h-4 w-4" />
               Create Budget
             </Button>
@@ -518,7 +518,7 @@ export function Budgets() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.spent_amount || 0), 0))}
+              {formatCurrency(Math.abs(budgets.reduce((sum, budget) => sum + (budget.spent_amount || 0), 0)))}
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-400">This period</p>
           </CardContent>
@@ -530,8 +530,9 @@ export function Budgets() {
         {budgets.map((budget) => {
           const totalAmount = budget.total_amount || 0
           const spentAmount = budget.spent_amount || 0
-          const percentage = totalAmount > 0 ? (spentAmount / totalAmount) * 100 : 0
-          const status = getBudgetStatus(spentAmount, totalAmount)
+          const absoluteSpentAmount = Math.abs(spentAmount)
+          const percentage = totalAmount > 0 ? (absoluteSpentAmount / totalAmount) * 100 : 0
+          const status = getBudgetStatus(absoluteSpentAmount, totalAmount)
 
           return (
             <Card key={budget.id}>
@@ -568,13 +569,13 @@ export function Budgets() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Spent: {formatCurrency(spentAmount)}</span>
+                    <span>Spent: {formatCurrency(absoluteSpentAmount)}</span>
                     <span>Budget: {formatCurrency(totalAmount)}</span>
                   </div>
                   <Progress value={Math.min(percentage, 100)} className="h-2" />
                   <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                     <span>{percentage.toFixed(1)}% used</span>
-                    <span>{formatCurrency(totalAmount - spentAmount)} remaining</span>
+                    <span>{formatCurrency(totalAmount - absoluteSpentAmount)} remaining</span>
                   </div>
                 </div>
 

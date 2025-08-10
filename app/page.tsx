@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, Suspense, useCallback } from "react"
+import { useState, Suspense, useCallback, useEffect } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { AuthForm } from "@/components/auth-form"
 import { SupabaseTest } from "@/components/supabase-test"
 import { SetupGuide } from "@/components/setup-guide"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { useAuth } from "@/lib/auth-context"
+import { useTutorial } from "@/lib/tutorial-context"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import dynamic from 'next/dynamic'
@@ -47,11 +48,18 @@ function AppContent() {
   const [showSupabaseTest, setShowSupabaseTest] = useState(false)
   const [showSetupGuide, setShowSetupGuide] = useState(false)
   const { user, loading } = useAuth()
+  const { setCurrentPage: setTutorialPage } = useTutorial()
 
   // Memoize state update handlers
   const handlePageChange = useCallback((page: string) => {
     setCurrentPage(page)
-  }, [])
+    setTutorialPage(page) // Sync with tutorial context
+  }, [setTutorialPage])
+
+  // Sync tutorial context with current page on mount
+  useEffect(() => {
+    setTutorialPage(currentPage)
+  }, [currentPage, setTutorialPage])
 
   const toggleSupabaseTest = useCallback((show: boolean) => {
     setShowSupabaseTest(show)

@@ -4,6 +4,8 @@ import "./globals.css";
 import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { NotificationsListener } from '@/components/notifications-listener';
+import { TutorialProvider } from '@/lib/tutorial-context';
+import { TutorialOverlay } from '@/components/tutorial-overlay';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,7 +39,10 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             <NotificationsListener>
-              {children}
+              <TutorialProvider>
+                {children}
+                <TutorialOverlay />
+              </TutorialProvider>
             </NotificationsListener>
           </ThemeProvider>
         </AuthProvider>

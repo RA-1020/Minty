@@ -305,7 +305,7 @@ export function Categories() {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button data-tutorial="create-category">
               <Plus className="mr-2 h-4 w-4" />
               Create Category
             </Button>
