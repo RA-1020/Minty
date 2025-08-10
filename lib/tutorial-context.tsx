@@ -189,17 +189,15 @@ export function TutorialProvider({
           completeAndCloseTutorial()
         }
         setIsTransitioning(false)
-      }, 800) // Longer delay for navigation
+      }, 500) // Reduced from 600ms
     } else {
-      // No navigation needed
-      transitionTimeoutRef.current = setTimeout(() => {
-        if (currentStep < currentTutorial.length - 1) {
-          setCurrentStep(prev => prev + 1)
-        } else {
-          completeAndCloseTutorial()
-        }
-        setIsTransitioning(false)
-      }, 300)
+      // No navigation needed - immediate transition
+      if (currentStep < currentTutorial.length - 1) {
+        setCurrentStep(prev => prev + 1)
+      } else {
+        completeAndCloseTutorial()
+      }
+      setIsTransitioning(false)
     }
   }, [currentStep, currentTutorial, onNavigate, user])
 
@@ -207,10 +205,9 @@ export function TutorialProvider({
     if (currentStep > 0) {
       setIsTransitioning(true)
       
-      setTimeout(() => {
-        setCurrentStep(prev => prev - 1)
-        setIsTransitioning(false)
-      }, 300)
+      // Immediate transition for previous step
+      setCurrentStep(prev => prev - 1)
+      setIsTransitioning(false)
     }
   }, [currentStep])
 

@@ -151,7 +151,7 @@ export const MAIN_TUTORIAL_STEPS: TutorialStep[] = [
     title: '⚠️ Budget Alerts',
     description: 'This section shows when you\'re approaching or exceeding your budget limits. It helps you stay aware of your spending and make adjustments before overspending.',
     target: 'budget-alerts',
-    placement: 'right',
+    placement: 'left',
     showOnPage: 'dashboard'
   },
   {

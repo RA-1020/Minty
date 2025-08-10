@@ -752,6 +752,7 @@ export function Dashboard() {
         </Card>
 
         {/* Budget Alerts */}
+        {/* Budget Alerts */}
         <Card data-tutorial="budget-alerts">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">

@@ -176,8 +176,8 @@ export function TutorialOverlay() {
         setPosition(newPosition)
       }
 
-      // Staggered animation entrance with longer delay for metrics
-      const delay = currentStepData.target === 'metrics' ? 800 : 100
+      // Position calculation with proper timing for scroll completion
+      const delay = currentStepData.target === 'metrics' ? 600 : 0 // Faster but still correct
       setTimeout(() => {
         updatePosition()
         setCardVisible(true)
@@ -190,7 +190,7 @@ export function TutorialOverlay() {
       return () => window.removeEventListener('resize', handleResize)
     } else {
       setCardVisible(false)
-      setTimeout(() => setIsVisible(false), 300)
+      setTimeout(() => setIsVisible(false), 100) // Reduced from 150ms
     }
   }, [isActive, currentStepData, currentPage])
 
@@ -234,17 +234,13 @@ export function TutorialOverlay() {
 
   // Handle step transitions
   const handleNext = () => {
-    setCardVisible(false)
-    setTimeout(() => {
-      nextStep()
-    }, 200)
+    // Don't hide the card first - let the tutorial context handle the transition
+    nextStep()
   }
 
   const handlePrevious = () => {
-    setCardVisible(false)
-    setTimeout(() => {
-      prevStep()
-    }, 200)
+    // Don't hide the card first - let the tutorial context handle the transition  
+    prevStep()
   }
 
   const handleRestart = () => {
@@ -296,7 +292,7 @@ export function TutorialOverlay() {
         <div
           ref={cardRef}
           className={cn(
-            "absolute w-[420px] transition-all duration-400 ease-out pointer-events-auto",
+            "absolute w-[420px] transition-all duration-200 ease-out pointer-events-auto",
             "bg-white/98 dark:bg-gray-900/98",
             "border border-white/30 dark:border-gray-700/50",
             "shadow-2xl shadow-black/20 dark:shadow-black/40",
