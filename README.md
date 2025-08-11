@@ -12,7 +12,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-### 🎯 **Track • Analyze • Optimize Your Finances**
+### **Track • Analyze • Optimize Your Finances**
 
 *Minty transforms complex financial data into beautiful, actionable insights with smooth animations and an intuitive interface.*
 
@@ -24,14 +24,14 @@
 <tr>
 <td width="50%">
 
-### 📊 **Smart Dashboard**
+### **Smart Dashboard**
 - **Real-time financial overview** with key metrics
 - **Interactive pie charts** with hover tooltips and smooth animations
 - **Monthly trend analysis** with bar charts
 - **Budget alerts** and spending notifications
 - **Recent transactions** at a glance
 
-### 💳 **Transaction Management**
+### **Transaction Management**
 - **Easy transaction entry** with smart categorization
 - **Advanced filtering** and search capabilities
 - **Bulk import/export** functionality
@@ -147,13 +147,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - **Financial analytics** with trend analysis and spending pattern recognition
 - **Multi-category organization** for comprehensive expense tracking
 
-### 🤖 **AI-Powered Insights**
+### **AI-Powered Insights**
 - **Intelligent transaction categorization** using machine learning
 - **Spending pattern analysis** with personalized recommendations
 - **Budget optimization** suggestions based on your financial behavior
 - **Predictive analytics** for better financial planning
 
-### 📊 **Advanced Analytics Dashboard**
+### **Advanced Analytics Dashboard**
 - **Real-time financial overview** with key performance indicators
 - **Interactive data visualization** for deeper insights
 - **Monthly and yearly trend analysis** with comparative reporting
@@ -165,7 +165,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - **Weekly financial reports** with trend analysis and insights
 - **Customizable notification preferences** with browser push support
 
-## 🔧 Development
+## Development
 
 ### Available Scripts
 
