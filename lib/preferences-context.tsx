@@ -32,6 +32,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     CNY: '¥',
     INR: '₹',
     PKR: '₨',
+    AED: 'د.إ',
   }
 
   const formatCurrency = (amount: number) => {
