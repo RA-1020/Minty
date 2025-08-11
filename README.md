@@ -1,4 +1,4 @@
-# 💰 Minty - Personal Finance Dashboard
+# Minty - Personal Finance Dashboard
 
 <div align="center">
 
@@ -12,26 +12,26 @@
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-### 🎯 **Track • Analyze • Optimize Your Finances**
+### **Track • Analyze • Optimize Your Finances**
 
 *Minty transforms complex financial data into beautiful, actionable insights with smooth animations and an intuitive interface.*
 
 </div>
 
-## ✨ Features
+## Features
 
 <table>
 <tr>
 <td width="50%">
 
-### 📊 **Smart Dashboard**
+### **Smart Dashboard**
 - **Real-time financial overview** with key metrics
 - **Interactive pie charts** with hover tooltips and smooth animations
 - **Monthly trend analysis** with bar charts
 - **Budget alerts** and spending notifications
 - **Recent transactions** at a glance
 
-### 💳 **Transaction Management**
+### **Transaction Management**
 - **Easy transaction entry** with smart categorization
 - **Advanced filtering** and search capabilities
 - **Bulk import/export** functionality
@@ -41,14 +41,14 @@
 </td>
 <td width="50%">
 
-### 🎯 **Budget & Goals**
+### **Budget & Goals**
 - **Custom budget creation** with spending limits
 - **Category-based budgeting** with visual progress
 - **Smart alerts** when approaching limits
 - **Real-time budget tracking**
 - **Performance analytics** and insights
 
-### 🎨 **Beautiful UI/UX**
+### **Beautiful UI/UX**
 - **Smooth animations** and micro-interactions
 - **Animated pie charts** with hover effects
 - **Dark/Light mode** support
@@ -60,25 +60,25 @@
 </tr>
 </table>
 
-## 🎬 Demo & Screenshots
+## Demo & Screenshots
 
 <div align="center">
 
-### 📱 Dashboard Overview
+### Dashboard Overview
 ![Dashboard](public/placeholder.jpg)
 *Beautiful, animated dashboard with real-time insights and interactive pie charts*
 
-### 💰 Transaction Management
+### Transaction Management
 ![Transactions](public/placeholder.jpg)
 *Intuitive transaction entry and management with smart categorization*
 
-### 📊 Budget Tracking
+### Budget Tracking
 ![Analytics](public/placeholder.jpg)
 *Comprehensive budget tracking with visual progress indicators*
 
 </div>
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 <div align="center">
 
@@ -94,7 +94,7 @@
 
 </div>
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -139,33 +139,33 @@ GROQ_API_KEY=your_groq_api_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-## 🎨 Key Features Highlights
+## Key Features Highlights
 
-### 💰 **Complete Financial Management**
+### **Complete Financial Management**
 - **Transaction tracking** with automatic categorization and smart insights
 - **Budget management** with real-time spending alerts and progress monitoring
 - **Financial analytics** with trend analysis and spending pattern recognition
 - **Multi-category organization** for comprehensive expense tracking
 
-### 🤖 **AI-Powered Insights**
+### **AI-Powered Insights**
 - **Intelligent transaction categorization** using machine learning
 - **Spending pattern analysis** with personalized recommendations
 - **Budget optimization** suggestions based on your financial behavior
 - **Predictive analytics** for better financial planning
 
-### 📊 **Advanced Analytics Dashboard**
+### **Advanced Analytics Dashboard**
 - **Real-time financial overview** with key performance indicators
 - **Interactive data visualization** for deeper insights
 - **Monthly and yearly trend analysis** with comparative reporting
 - **Customizable reporting** for different time periods and categories
 
-### 🔔 **Smart Notifications System**
+### **Smart Notifications System**
 - **Budget alerts** when approaching spending limits (80% threshold)
 - **Spending reminders** for consistent transaction logging
 - **Weekly financial reports** with trend analysis and insights
 - **Customizable notification preferences** with browser push support
 
-## 🔧 Development
+## Development
 
 ### Available Scripts
 
@@ -178,23 +178,23 @@ npm run lint         # Run ESLint
 npm run type-check   # TypeScript type checking
 ```
 
-## 🌟 Roadmap
+## Roadmap
 
-### 🎯 **Version 2.0** (Coming Soon)
-- [ ] 📱 **Mobile App** (React Native)
-- [ ] 🔐 **Multi-user Support** with family sharing
-- [ ] 📊 **Advanced Analytics** with ML insights
-- [ ] 🌍 **Multi-currency Support**
-- [ ] 📤 **Bank Integration** via Plaid API
+### **Version 2.0** (Coming Soon)
+- [ ] **Mobile App** (React Native)
+- [ ] **Multi-user Support** with family sharing
+- [ ] **Advanced Analytics** with ML insights
+- [ ] **Multi-currency Support**
+- [ ] **Bank Integration** via Plaid API
 
-### 🚀 **Version 1.5** (In Progress)
-- [x] ✅ **Animated Dashboard** with smooth transitions
-- [x] ✅ **Color-coded Categories** with friendly names
-- [ ] 🎨 **Theme Customization**
-- [ ] 📱 **PWA Support**
-- [ ] 🔄 **Real-time Sync**
+### **Version 1.5** (In Progress)
+- [x] **Animated Dashboard** with smooth transitions
+- [x] **Color-coded Categories** with friendly names
+- [ ] **Theme Customization**
+- [ ] **PWA Support**
+- [ ] **Real-time Sync**
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
@@ -202,9 +202,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-**⭐ If you found Minty helpful, please give it a star! ⭐**
+**If you found Minty helpful, please give it a star! **
 
-Made with ❤️ by [RA-1020](https://github.com/RA-1020) & [sohjpeg](https://github.com/sohjpeg)
+Made with ❤by [RA-1020](https://github.com/RA-1020) & [sohjpeg](https://github.com/sohjpeg)
 
 [🔝 Back to Top](#-minty---personal-finance-dashboard)
 
