@@ -268,7 +268,7 @@ export function TutorialProvider({
     <TutorialContext.Provider value={value}>
       {children}
       
-      {/* CSS for animations */}
+      
       <style jsx global>{`
         @keyframes tutorial-pulse {
           0%, 100% {

@@ -263,7 +263,7 @@ export function TutorialOverlay() {
 
   return (
     <>
-      {/* Enhanced Background Overlay */}
+      
       <div
         className={cn(
           "fixed inset-0 z-[9999] transition-all duration-500 ease-out",
@@ -274,7 +274,7 @@ export function TutorialOverlay() {
         )}
         onClick={currentStepData?.allowClickthrough ? undefined : handleBackgroundClick}
       >
-        {/* Subtle Highlight for Target Element */}
+        
         {currentStepData.target && (
           <div 
             className="tutorial-highlight-overlay absolute pointer-events-none transition-all duration-700 ease-out"
@@ -288,7 +288,7 @@ export function TutorialOverlay() {
           />
         )}
 
-        {/* Tutorial Card with Enhanced Styling */}
+        
         <div
           ref={cardRef}
           className={cn(
@@ -304,10 +304,10 @@ export function TutorialOverlay() {
           )}
           style={position}
         >
-          {/* Gradient Header */}
+          
           <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600 p-1">
             <div className="bg-white/95 dark:bg-gray-900/95 rounded-xl p-6 pb-4">
-              {/* Header Content */}
+              
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 pr-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -317,7 +317,7 @@ export function TutorialOverlay() {
                     </h3>
                   </div>
                   
-                  {/* Step Progress Indicator */}
+                  
                   <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
                     <span className="font-medium">Step {currentStep + 1} of {currentTutorial.length}</span>
                     <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -342,14 +342,14 @@ export function TutorialOverlay() {
                 </Button>
               </div>
 
-              {/* Content */}
+              
               <div className="mb-6">
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-[15px]">
                   {currentStepData.description}
                 </p>
               </div>
 
-              {/* Enhanced Progress Bar */}
+              
               <div className="mb-6">
                 <Progress 
                   value={progress} 
@@ -365,7 +365,7 @@ export function TutorialOverlay() {
                 </div>
               </div>
 
-              {/* Interactive Tutorial Notice */}
+              
               {currentStepData.allowClickthrough && (
                 <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
                   <div className="flex items-start gap-3">
@@ -382,7 +382,7 @@ export function TutorialOverlay() {
                 </div>
               )}
 
-              {/* Navigation Controls */}
+              
               <div className="flex items-center justify-between">
                 <div className="flex gap-2">
                   <Button
@@ -437,7 +437,7 @@ export function TutorialOverlay() {
         </div>
       </div>
 
-      {/* Enhanced CSS Animations */}
+      
       <style jsx global>{`
         .tutorial-card-enter {
           animation: tutorialCardEnter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;

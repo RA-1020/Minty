@@ -1,4 +1,3 @@
-// categories.tsx - FIXED VERSION
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -44,7 +43,7 @@ const colorOptions = [
 export function Categories() {
   const { categories, loading, error, createCategory, updateCategory, deleteCategory } = useCategories()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<any>(null) // ✅ FIXED: This state controls edit dialog
+  const [editingCategory, setEditingCategory] = useState<any>(null)
   const [categoryStats, setCategoryStats] = useState<Record<string, any>>({})
   const [transactionsLoading, setTransactionsLoading] = useState(false)
   const { formatCurrency } = useFormatting()
@@ -79,7 +78,6 @@ export function Categories() {
     loadUserProfile()
   }, [user?.id])
 
-  // ✅ FIXED: Memoize loadCategoryStats to prevent infinite loops
   const loadCategoryStats = useCallback(async () => {
     if (!user?.id) {
       setTransactionsLoading(false)
@@ -161,14 +159,12 @@ export function Categories() {
     }
   }, [user?.id, categories])
 
-  // ✅ FIXED: Initial load effect
   useEffect(() => {
     if (categories && categories.length > 0) {
       loadCategoryStats()
     }
   }, [loadCategoryStats])
 
-  // ✅ FIXED: Separate effect for real-time listener
   useEffect(() => {
     if (!user?.id) return
 
@@ -219,7 +215,6 @@ export function Categories() {
     }
   }
 
-  // ✅ FIXED: Make sure this function is properly defined
   const handleUpdateCategory = async (formData: FormData) => {
     if (!editingCategory) return
     
@@ -232,7 +227,7 @@ export function Categories() {
         alert_threshold: Number.parseFloat(formData.get("threshold") as string) || 90,
         type: formData.get("type") as "income" | "expense",
       })
-      setEditingCategory(null) // ✅ FIXED: Close the edit dialog
+      setEditingCategory(null)
     } catch (error) {
       console.error("Error updating category:", error)
     }
@@ -246,7 +241,6 @@ export function Categories() {
     }
   }
 
-  // ✅ FIXED: Add explicit event handler for edit button
   const handleEditClick = (category: any) => {
     console.log('Edit button clicked for category:', category.name)
     setEditingCategory(category)
@@ -297,7 +291,6 @@ export function Categories() {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Categories</h1>
@@ -375,7 +368,6 @@ export function Categories() {
         </Dialog>
       </div>
 
-      {/* ✅ FIXED: Edit Category Dialog */}
       <Dialog open={!!editingCategory} onOpenChange={(open) => !open && setEditingCategory(null)}>
         <DialogContent>
           <DialogHeader>
@@ -468,7 +460,6 @@ export function Categories() {
         </DialogContent>
       </Dialog>
 
-      {/* Category Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-2">
@@ -513,7 +504,6 @@ export function Categories() {
         </Card>
       </div>
 
-      {/* Expense Categories */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -554,7 +544,6 @@ export function Categories() {
                               : "On Track"}
                       </Badge>
                       <div className="flex space-x-1">
-                        {/* ✅ FIXED: Use explicit event handler */}
                         <Button variant="ghost" size="sm" onClick={() => handleEditClick(category)}>
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -594,7 +583,6 @@ export function Categories() {
         </CardContent>
       </Card>
 
-      {/* Income Categories */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -627,7 +615,6 @@ export function Categories() {
                         <p className="text-sm text-gray-600 dark:text-gray-400">This month</p>
                       </div>
                       <div className="flex space-x-1">
-                        {/* ✅ FIXED: Use explicit event handler */}
                         <Button variant="ghost" size="sm" onClick={() => handleEditClick(category)}>
                           <Edit className="h-4 w-4" />
                         </Button>

@@ -47,7 +47,7 @@ export function Categories() {
   const [transactionsLoading, setTransactionsLoading] = useState(false)
   const { user } = useAuth()
 
-  // ✅ FIXED: Memoize loadCategoryStats to prevent infinite loops
+
   const loadCategoryStats = useCallback(async () => {
     if (!user?.id || !categories || categories.length === 0) {
       setTransactionsLoading(false)
@@ -104,12 +104,12 @@ export function Categories() {
     }
   }, [user?.id, categories?.length])
 
-  // ✅ FIXED: Initial load effect
+
   useEffect(() => {
     loadCategoryStats()
   }, [loadCategoryStats])
 
-  // ✅ FIXED: Separate effect for real-time listener
+
   useEffect(() => {
     if (!user?.id) return
 
@@ -189,7 +189,7 @@ export function Categories() {
   const expenseCategories = categories?.filter((cat) => cat.type === "expense") || []
   const incomeCategories = categories?.filter((cat) => cat.type === "income") || []
 
-  // ✅ FIXED: Show loading only when categories are loading, not transactions
+
   if (loading && !categories) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
@@ -214,7 +214,7 @@ export function Categories() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* ✅ FIXED: Show small loading indicator for transactions */}
+      
       {transactionsLoading && (
         <div className="flex items-center justify-center py-2">
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -222,7 +222,7 @@ export function Categories() {
         </div>
       )}
 
-      {/* Header */}
+      
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Categories</h1>
@@ -300,7 +300,7 @@ export function Categories() {
         </Dialog>
       </div>
 
-      {/* Category Overview */}
+      
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-2">
@@ -345,7 +345,7 @@ export function Categories() {
         </Card>
       </div>
 
-      {/* Expense Categories */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -425,7 +425,7 @@ export function Categories() {
         </CardContent>
       </Card>
 
-      {/* Income Categories */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">

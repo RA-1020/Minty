@@ -90,7 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting signup for:', email)
       
-      // ✅ SIMPLIFIED: Just do the basic signup, let Supabase handle profile creation
       const { data, error } = await supabase.auth.signUp({
         email,
         password,

@@ -636,13 +636,13 @@ export default function Settings() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+      
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
         <p className="text-gray-600 dark:text-gray-400">Manage your account preferences and application settings</p>
       </div>
 
-      {/* Success/Error Messages */}
+      
       {success && (
         <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
           <CheckCircle className="h-4 w-4 text-green-600" />
@@ -659,7 +659,7 @@ export default function Settings() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Settings */}
+        
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -744,7 +744,7 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
+        
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
@@ -764,7 +764,7 @@ export default function Settings() {
 
             <Separator />
 
-            {/* Tutorial Section - Enhanced */}
+            
             <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -813,7 +813,7 @@ export default function Settings() {
         </Card>
       </div>
 
-      {/* Preferences */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -898,7 +898,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Notifications */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -1005,7 +1005,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {/* Data Management */}
+      
       <Card>
         <CardHeader>
           <CardTitle>Data Management</CardTitle>

@@ -284,7 +284,6 @@ export function Transactions() {
     }
   }
 
-  // NEW: Handle editing transactions
   const handleEditTransaction = async (formData: FormData) => {
     if (!user?.id || !editingTransaction) return
 
@@ -483,7 +482,6 @@ export function Transactions() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Transactions</h1>
@@ -583,7 +581,6 @@ export function Transactions() {
         </Dialog>
       </div>
 
-      {/* NEW: Edit Transaction Dialog */}
       <Dialog open={!!editingTransaction} onOpenChange={(open) => !open && setEditingTransaction(null)}>
         <DialogContent>
           <DialogHeader>
@@ -703,7 +700,6 @@ export function Transactions() {
         </DialogContent>
       </Dialog>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
@@ -738,7 +734,6 @@ export function Transactions() {
         </Card>
       </div>
 
-      {/* Filters and Search */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -821,7 +816,6 @@ export function Transactions() {
         </CardContent>
       </Card>
 
-      {/* Transactions List */}
       <Card>
         <CardHeader>
           <CardTitle>All Transactions</CardTitle>

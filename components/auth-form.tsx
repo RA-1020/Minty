@@ -31,9 +31,13 @@ export function AuthForm() {
 
     try {
       if (type === "signup") {
-        // ✅ FIXED: Changed full_Name to fullName
         const { error } = await signUp(email, password, fullName)
         if (error) throw error
+        
+        // Clear the form fields
+        const form = e.target as HTMLFormElement
+        form.reset()
+        
         setMessage("Check your email for the confirmation link!")
       } else {
         const { error } = await signIn(email, password)
@@ -49,7 +53,6 @@ export function AuthForm() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
-        {/* Left side - Features showcase */}
         <div className="hidden lg:block space-y-8">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center space-x-2">
@@ -96,7 +99,6 @@ export function AuthForm() {
           </div>
         </div>
 
-        {/* Right side - Auth form */}
         <Card className="w-full max-w-md mx-auto">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 lg:hidden mb-4">
@@ -115,9 +117,11 @@ export function AuthForm() {
             )}
 
             {message && (
-              <Alert className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{message}</AlertDescription>
+              <Alert className="mb-4 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+                <AlertCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-700 dark:text-green-200">
+                  {message}
+                </AlertDescription>
               </Alert>
             )}
 

@@ -33,7 +33,6 @@ export function Budgets() {
   const { user } = useAuth()
   const { formatCurrency, formatDate } = useFormatting()
 
-  // ✅ FIXED: Removed categories from select query - only select existing columns
   useEffect(() => {
     const loadBudgets = async () => {
       if (!user?.id) return
@@ -121,7 +120,6 @@ export function Budgets() {
     }
   }
 
-  // ✅ FIXED: Removed categories field from insert - only use existing columns
   const handleCreateBudget = async (formData: FormData) => {
     if (!user?.id) return
 
@@ -151,7 +149,6 @@ export function Budgets() {
       spent_amount: 0, // Always start at 0
       start_date: startDate,
       end_date: endDate,
-      // ✅ REMOVED: categories field - doesn't exist in database
     }
 
     try {
@@ -188,7 +185,6 @@ export function Budgets() {
     }
   }
 
-  // NEW: Handle editing budgets
   const handleEditBudget = async (formData: FormData) => {
     if (!user?.id || !editingBudget) return
 
@@ -216,7 +212,6 @@ export function Budgets() {
       total_amount: Number.parseFloat(amount),
       start_date: startDate,
       end_date: endDate,
-      // Note: We don't update spent_amount here - that's managed by transactions
     }
 
     console.log('Updating budget with data:', updatedBudget)
@@ -339,7 +334,6 @@ export function Budgets() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Budgets</h1>
@@ -401,7 +395,6 @@ export function Budgets() {
         </Dialog>
       </div>
 
-      {/* NEW: Edit Budget Dialog */}
       <Dialog open={!!editingBudget} onOpenChange={(open) => !open && setEditingBudget(null)}>
         <DialogContent>
           <DialogHeader>
@@ -469,7 +462,6 @@ export function Budgets() {
                 </div>
               </div>
               
-              {/* Info about spent amount */}
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-sm text-blue-800 dark:text-blue-200">
                   <strong>Current spent amount:</strong> {formatCurrency(editingBudget.spent_amount || 0)}
@@ -490,7 +482,6 @@ export function Budgets() {
         </DialogContent>
       </Dialog>
 
-      {/* Budget Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-2">
@@ -525,7 +516,6 @@ export function Budgets() {
         </Card>
       </div>
 
-      {/* Budget Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {budgets.map((budget) => {
           const totalAmount = budget.total_amount || 0
@@ -579,7 +569,6 @@ export function Budgets() {
                   </div>
                 </div>
 
-                {/* ✅ REMOVED: Categories section since it doesn't exist in database */}
               </CardContent>
             </Card>
           )

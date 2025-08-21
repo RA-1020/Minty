@@ -26,8 +26,7 @@ export function Sidebar({ currentPage, setCurrentPage }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-slate-800 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700" data-tutorial="sidebar">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-sm">
             <Wallet className="h-5 w-5 text-white" />
@@ -52,22 +51,18 @@ export function Sidebar({ currentPage, setCurrentPage }: SidebarProps) {
               key={item.id}
               variant="ghost"
               className={`
-                w-full justify-start h-10 px-3 rounded-lg font-medium transition-all duration-150 group relative overflow-hidden
+                w-full justify-start h-11 px-4 rounded-xl font-medium text-sm transition-all duration-200
                 ${isActive 
-                  ? "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 shadow-none" 
-                  : "text-gray-300 dark:text-slate-400 hover:text-white dark:hover:text-slate-100 hover:bg-slate-700 dark:hover:bg-slate-900/50"
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800' 
+                  : 'text-gray-300 dark:text-slate-400 hover:text-white dark:hover:text-white hover:bg-slate-700 dark:hover:bg-slate-800'
                 }
               `}
               onClick={() => {
                 setCurrentPage(item.id)
                 setIsMobileOpen(false)
               }}
-              data-tutorial={`${item.id}-link`}
             >
-              {isActive && (
-                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-600 dark:bg-blue-400 rounded-r-full" />
-              )}
-              <Icon className={`mr-3 h-4 w-4 transition-colors duration-150 ${isActive ? "text-blue-600 dark:text-blue-400" : ""}`} />
+              <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
               <span className="text-sm">{item.label}</span>
             </Button>
           )
@@ -125,7 +120,8 @@ export function Sidebar({ currentPage, setCurrentPage }: SidebarProps) {
       <aside
         className={`
         fixed lg:static inset-y-0 left-0 z-50 w-64 transform transition-all duration-200 ease-out
-        ${isMobileOpen ? "translate-x-0 shadow-xl" : "-translate-x-full lg:translate-x-0 lg:shadow-none"}
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        lg:block
       `}
       >
         <SidebarContent />

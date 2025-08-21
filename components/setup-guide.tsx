@@ -17,7 +17,7 @@ export function SetupGuide() {
         <p className="text-gray-600 dark:text-gray-400">Follow these steps to connect your project to Supabase</p>
       </div>
 
-      {/* Step 1 */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -45,7 +45,7 @@ export function SetupGuide() {
         </CardContent>
       </Card>
 
-      {/* Step 2 */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -71,7 +71,7 @@ export function SetupGuide() {
         </CardContent>
       </Card>
 
-      {/* Step 3 */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -128,7 +128,7 @@ export function SetupGuide() {
         </CardContent>
       </Card>
 
-      {/* Step 4 */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -199,7 +199,7 @@ export function SetupGuide() {
         </CardContent>
       </Card>
 
-      {/* Step 5 */}
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">

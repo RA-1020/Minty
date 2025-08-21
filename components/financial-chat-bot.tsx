@@ -268,7 +268,7 @@ export default function FinancialChatBot() {
                 </div>
               )}
               
-              {/* Invisible div to help with auto-scrolling */}
+              
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>

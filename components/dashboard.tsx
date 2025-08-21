@@ -351,13 +351,11 @@ export function Dashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
         <p className="text-gray-600 dark:text-gray-400">Welcome back! Here's your financial overview.</p>
       </div>
 
-      {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tutorial="metrics">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -408,9 +406,7 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-tutorial="charts">
-        {/* Spending by Category */}
         <Card data-tutorial="spending-chart">
           <CardHeader>
             <CardTitle>Spending by Category</CardTitle>
@@ -420,7 +416,7 @@ export function Dashboard() {
             <div className="h-[400px] w-full">
               {categoryData && categoryData.length > 0 ? (
                 <div className="w-full h-full flex flex-col">
-                  {/* Custom Pie Chart using CSS Conic Gradient */}
+                  
                   <div className="flex-1 flex items-center justify-center">
                     <div className="relative">
                       <div 
@@ -435,7 +431,7 @@ export function Dashboard() {
                           animation: 'smoothPieGrow 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
                         }}
                       />
-                      {/* Center hole for donut effect */}
+                      
                       <div className="absolute inset-8 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center will-change-transform"
                            style={{ animation: 'centerAppear 0.6s ease-out 0.8s forwards', opacity: 0 }}>
                         <div className="text-center">
@@ -452,7 +448,7 @@ export function Dashboard() {
                     </div>
                   </div>
                   
-                  {/* Legend */}
+                  
                   <div className="mt-4 flex flex-wrap gap-4 justify-center">
                     {categoryData.map((entry, index) => {
                       const total = categoryData.reduce((sum, item) => sum + item.value, 0)
@@ -499,7 +495,7 @@ export function Dashboard() {
               )}
             </div>
             
-            {/* Add custom CSS for smooth pie chart animation */}
+            
             <style jsx>{`
               @keyframes smoothPieGrow {
                 0% {
@@ -548,7 +544,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Smart Spending Insights - Compact & Scrollable */}
+        
         <Card className="border-0 shadow-sm" data-tutorial="smart-insights">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
@@ -592,7 +588,7 @@ export function Dashboard() {
                       }}
                     >
                       <div className="flex items-start gap-3">
-                        {/* Compact Icon */}
+                        
                         <div className={`p-1.5 rounded-md flex-shrink-0 ${
                           insight.type === 'warning' ? 'bg-amber-100 dark:bg-amber-900/20' :
                           insight.type === 'success' || insight.type === 'achievement' ? 'bg-emerald-100 dark:bg-emerald-900/20' :
@@ -603,7 +599,7 @@ export function Dashboard() {
                           <span className="text-sm">{insight.icon}</span>
                         </div>
                         
-                        {/* Compact Content */}
+                        
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <h4 className="font-medium text-base text-gray-900 dark:text-gray-100 leading-tight line-clamp-1">
@@ -617,7 +613,7 @@ export function Dashboard() {
                             {insight.description}
                           </p>
                           
-                          {/* Compact Progress bar */}
+                          
                           {insight.type === 'goal' && insight.progress && (
                             <div className="mb-2">
                               <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
@@ -633,7 +629,7 @@ export function Dashboard() {
                             </div>
                           )}
                           
-                          {/* Compact Action tip */}
+                          
                           {insight.actionTip && (
                             <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-md">
                               <div className="flex items-start gap-1.5">
@@ -645,7 +641,7 @@ export function Dashboard() {
                             </div>
                           )}
                           
-                          {/* Compact badges */}
+                          
                           <div className="flex items-center gap-1.5 mt-2">
                             {insight.type === 'achievement' && (
                               <div className="px-1.5 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full">
@@ -664,7 +660,7 @@ export function Dashboard() {
                   ))}
                 </div>
                 
-                {/* Compact footer for more insights */}
+                
                 {smartInsights.length > 4 && (
                   <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                     <button className="w-full py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
@@ -690,7 +686,7 @@ export function Dashboard() {
               </div>
             )}
             
-            {/* Custom animations */}
+            
             <style jsx>{`
               @keyframes fadeInUp {
                 from {
@@ -738,9 +734,9 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {/* Bottom Row */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Transactions */}
+        
         <Card data-tutorial="recent-transactions">
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
@@ -779,8 +775,8 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Budget Alerts */}
-        {/* Budget Alerts */}
+        
+        
         <Card data-tutorial="budget-alerts">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
