@@ -88,8 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
-      console.log('Starting signup for:', email)
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -105,8 +103,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { data, error }
       }
 
-      console.log('Signup successful:', data.user?.id)
-      
       // Don't try to create profile manually - let the database trigger handle it
       // or let the user confirm their email first
       

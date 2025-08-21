@@ -162,13 +162,6 @@ export function TutorialProvider({
   const nextStep = useCallback(() => {
     const currentStepData = currentTutorial[currentStep]
     
-    console.log('Tutorial Debug:', {
-      currentStep,
-      totalSteps: currentTutorial.length,
-      currentStepId: currentStepData?.id,
-      nextStepExists: currentStep < currentTutorial.length - 1
-    })
-    
     setIsTransitioning(true)
     
     // Clear any existing timeout

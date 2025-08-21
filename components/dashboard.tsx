@@ -489,7 +489,6 @@ export function Dashboard() {
                   <div className="text-center animate-in fade-in-50 duration-500">
                     <p className="text-lg font-medium">No expense data available</p>
                     <p className="text-sm">Add some expense transactions to see the breakdown</p>
-                    <p className="text-xs mt-2 opacity-75">Debug: {categoryData ? categoryData.length : 0} categories found</p>
                   </div>
                 </div>
               )}
